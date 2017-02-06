@@ -1,0 +1,9 @@
+Package: com.summer1988.hookmttlite
+Name: hookmttlite
+Depends: mobilesubstrate, coreutils-bin
+Version: 0.1.1
+Architecture: iphoneos-arm
+Description: Just use to hook qq taobao alipay page!
+Maintainer: summer1988
+Author: summer1988
+Section: Tweaks
