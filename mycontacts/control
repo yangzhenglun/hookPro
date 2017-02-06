@@ -1,0 +1,9 @@
+Package: com.summer1988.mycontacts
+Name: mycontacts
+Depends: mobilesubstrate
+Version: 0.0.1
+Architecture: iphoneos-arm
+Description: An awesome MobileSubstrate tweak!
+Maintainer: summer1988
+Author: summer1988
+Section: Tweaks
