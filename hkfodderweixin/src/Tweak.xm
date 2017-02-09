@@ -2879,7 +2879,7 @@ static int m_currentNums = 0;
 
             dispatch_async(dispatch_get_main_queue(), ^{
 
-                dicCount = dicCount + 1;
+                dicCount = dicCount + 1; 
 
                 //显示
                 NSString *text = [NSString stringWithFormat:@"72: %d/%lu",dicCount,(unsigned long)[keys count]];
@@ -2900,7 +2900,7 @@ static int m_currentNums = 0;
                         }else{
 
                             if([m_cardContacts count] > 0){
-                                if([cardUsers[0] isEqualToString:@""]){
+                                if(![cardUsers[0] isEqualToString:@""]){
 
                                     uploadLog(geServerTypeTitle(72,4,@"开始发送第一个名片"),[NSString stringWithFormat:@"当前wixd:%@  执行的位置：%d 共有多少个好友:%lu",wxid,dicCount,(unsigned long)[keys count]]);
                                     //发第一个名片
