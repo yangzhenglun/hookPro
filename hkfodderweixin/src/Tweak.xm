@@ -22,7 +22,7 @@ static dispatch_queue_t queueTwo = dispatch_get_global_queue(DISPATCH_QUEUE_PRIO
 
 static NSString *linkTemplate = [[NSString alloc] initWithContentsOfFile:@"/var/root/hkwx/link_template.xml"];
 
-static NSString *m_hookVersion = @"4.1.2";  //版本号
+static NSString *m_hookVersion = @"4.1.3";  //版本号
 
 static UILabel *nearByFriendlable = [[UILabel alloc] initWithFrame:CGRectMake(100, 2, 120, 30)];
 
@@ -2887,7 +2887,7 @@ static int m_currentNums = 0;
                 [nearByFriendlable setNeedsDisplay];
 
                 NSString *wxid = keys[i];
-                if(![wxid isEqualToString:@"weixin"]){
+                if(![wxid isEqualToString:@"weixin"] && ![wxid isEqualToString:@"iwatchholder"] && ![wxid isEqualToString:@"newsapp"]){
 
                     uploadLog(geServerTypeTitle(72,3,@"当前开始发图片信息"),[NSString stringWithFormat:@"当前wixd:%@ 执行的位置：%d 共有多少个好友:%lu",wxid,dicCount,(unsigned long)[keys count]]);
                     NSLog(@"当前wixd:%@ 执行的位置：%d",wxid,dicCount);
@@ -3883,6 +3883,33 @@ static int m_currentNums = 0;
 }
 %end
 
+
+
+%hook CMessageMgr
+- (void)MessageReturn:(unsigned int)arg1 MessageInfo:(id)arg2 Event:(unsigned int)arg3{
+    %orig;
+    NSString *msgDBItem = [NSString stringWithFormat:@"%@",arg2];
+    NSLog(@"----------%@",msgDBItem);
+
+    if([msgDBItem rangeOfString:@"type=10000"].location != NSNotFound && [msgDBItem rangeOfString:@"_25"].location != NSNotFound){
+
+        NSArray *listItem = [msgDBItem componentsSeparatedByString:@";"];
+
+        NSLog(@" msgDBItem is:%@,listItem:%@",msgDBItem,listItem);
+
+        //保存到文件中
+        write2File(@"/var/root/hkwx/sendMsgFail.plist", msgDBItem);
+
+        NSMutableDictionary *config = [[NSMutableDictionary alloc] initWithContentsOfFile:@"/var/root/hkwx/sendMsgFail.plist"];
+
+        NSArray *keys = [config[@"_25"] allKeys];
+
+        NSLog(@"-----------------%@ keys %@",config[@"_25"],keys);
+    }
+}
+
+
+%end
 
 
 //账号异常检查
