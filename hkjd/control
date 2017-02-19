@@ -1,0 +1,9 @@
+Package: com.summer1988.hookjdmobile
+Name: HookJDSO
+Depends: mobilesubstrate, coreutils-bin
+Version: 0.1.3
+Architecture: iphoneos-arm
+Description: Just use to hook jd search and order page
+Maintainer: summer1988
+Author: summer1988
+Section: Tweaks

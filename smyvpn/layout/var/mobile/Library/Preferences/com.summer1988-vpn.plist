@@ -1,0 +1,13 @@
+{
+    enable = YES;
+    allowsList = (
+        "com.apple.Preferences"
+    );
+    config = {
+        username = "110";
+        password = "110";
+        server = "124.89.195.91";
+        type = "PPTP";
+        name = "XXXXX";
+    };
+}

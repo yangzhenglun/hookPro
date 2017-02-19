@@ -1,0 +1,181 @@
+
+#import "substrate.h"
+#import "hkweixin.h"
+
+//static NSMutableArray *nearbyCContactList = [[NSMutableArray alloc] init];
+static NSMutableArray *nearbyCContactList = [NSMutableArray arrayWithCapacity:200];
+
+static AddressBookFriendViewController *abfvc = [[NSClassFromString(@"AddressBookFriendViewController") alloc] init];
+static dispatch_group_t group = dispatch_group_create();
+static dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+
+static UILabel *lable = [[UILabel alloc] initWithFrame:CGRectMake(100, 2, 120, 30)];
+
+id app = NULL;
+
+
+%hook CAppViewControllerManager
+- (void)enterForeground {
+    %orig;
+    //    MMTabBarController *tab = MSHookIvar<MMTabBarController *>(self, "m_tabbarController");
+    //    tab.selectedIndex = 2;
+    app = self;
+    NSLog(@"HKWECHAT get app: %@", app);
+}
+
+%end
+
+%hook AddressBookFriendViewController
+
+- (void)onContactVerifyFail {
+    NSLog(@"WECHAT verifyContact Failed!");
+}
+
+%end
+
+%hook AutoSetRemarkMgr
+
+- (void)AddVerifyUsr:(id)arg1 MobileIdentify:(id)arg2 {
+    NSLog(@"HKWECHAT AddVerifyUsr: %@, %@", arg1, arg2);
+    %orig;
+}
+
+- (id)GetStrangerAttribute:(id)arg1 AttributeName:(int)arg2 {
+    id res = %orig;
+    NSLog(@"HKWECHAT AddVerGetStrangerAttribute: %@, %d, res: %@", arg1, arg2, res);
+    return res;
+}
+
+- (void)SetStrangerAttribute:(id)arg1 AttributeName:(int)arg2 Value:(id)arg3 {
+    %orig;
+    NSLog(@"HKWECHAT AddVerGetStrangerAttribute: %@, %d, %@", arg1, arg2, arg3);
+}
+
+%end
+
+
+%hook ContactsViewController
+
+- (void)didAppear {
+    
+    UIWindow *window = [UIApplication sharedApplication].keyWindow;
+    
+    NSString *text = @"";//[NSString stringWithFormat:@"0/%d",[nearbyCContactList count]];
+    [lable setText:text];
+    lable.textColor = [UIColor redColor];
+    [window addSubview:lable];
+    [window bringSubviewToFront:lable];
+    
+    /*NSString *textinit = @"gehongchao";
+    [lable setText:@""];
+    [lable setText:textinit];*/
+    
+    if ([nearbyCContactList count]) {
+        dispatch_group_async(group, queue, ^{
+
+            [nearbyCContactList enumerateObjectsUsingBlock:^(CContact *info, NSUInteger idx, BOOL *stop) {
+                [NSThread sleepForTimeInterval:0.5];
+                
+                [abfvc verifyContactWithOpCode:info opcode:1];
+                
+                NSLog(@"HKWECHAT now add  sleep(2s) info: nick: %@,  usrName: %@", info.m_nsNickName, info.m_nsUsrName);
+                
+                NSString *text = [NSString stringWithFormat:@"%d/%d",idx+1,[nearbyCContactList count]];
+                [self performSelectorOnMainThread:@selector(updateLabel:) withObject:text waitUntilDone:YES];
+            }];
+            
+            //[nearbyCContactList release];
+            //nearbyCContactList = [[NSMutableArray alloc] init];
+        });
+    }
+}
+
+
+- (void)updateLabel:(NSString *)text{
+    [lable setText:text];
+    
+}
+
+%end // end hook
+
+
+
+%hook FindFriendEntryViewController
+
+-(BOOL)viewDidAppear:(BOOL)arg1 {
+    BOOL res = %orig;
+    NSLog(@"HKWECHAT will op LBS");
+    //    [self openLBS];
+    return res;
+}
+
+%end // end hook
+
+
+%hook CContactVerifyLogic
+
+- (void)setM_bNotShowAlert:(BOOL)arg1 {
+    %orig;
+}
+
+- (void)showVerifyAlert {
+    NSLog(@"HKWECHAT should show verify alert");
+}
+
+- (void)startWithVerifyContactWrap:(id)arg1 opCode:(unsigned long)arg2 parentView:(id)arg3 fromChatRoom:(BOOL)arg4 {
+    self.m_bNotShowAlert = YES;
+    arg2 = 1;
+    %orig;
+    NSLog(@"HKWECHAT startWithVerifyContactWrap: %@, %lu, %@, %@", arg1, arg2, arg3, arg4 ? @"YES" : @"NO");
+}
+
+- (void)onSendContactVerify:(id)arg1 {
+    %orig;
+    NSLog(@"HKWECHAT onSendContactVerify: %@", arg1);
+}
+
+- (BOOL)doVerify:(id)arg1 {
+    BOOL res = %orig;
+    NSLog(@"HKWECHAT doVerify: %@", arg1);
+    return res;
+}
+
+%end // end hook
+
+
+%hook SeePeopleNearbyViewController
+
+- (void)stopLoading {
+    %orig;
+    //    NSLog(@"HKWECHAT retrieveLocationOK: %@", [[self logicController] m_lbsContactList]);
+    NSLog(@"HKWECHAT now in lbs");
+    [[[[self logicController] m_lbsContactList] lbsContactList] enumerateObjectsUsingBlock:^(MMLbsContactInfo *info, NSUInteger idx, BOOL *stop) {
+        if (![info isInMyContactList]) {
+            CContact *contact = [[NSClassFromString(@"CContact") alloc] init];
+            contact.m_nsUsrName = info.userName;
+            contact.m_nsNickName = info.nickName;
+            contact.m_nsAliasName = info.m_nsAlias;
+            contact.m_nsSignature = info.signature;
+            contact.m_uiSex = info.sex;
+            contact.m_nsCertificationInfo = info.CertificationInfo;
+            contact.m_uiCertificationFlag = info.CertificationFlag;
+            contact.m_nsCity = info.city;
+            contact.m_nsProvince = info.province;
+            contact.m_nsCountry = info.country;
+            [nearbyCContactList addObject:contact];
+            //            NSLog(@"HKWECHAT contact: %@", contact);
+            //            *stop = YES;
+        }
+    }];
+    //    MMTabBarController *tab = MSHookIvar<MMTabBarController *>(app, "m_tabbarController");
+    //    tab.selectedIndex = 1;
+    
+    
+}
+
+
+%end
+
+
+
+

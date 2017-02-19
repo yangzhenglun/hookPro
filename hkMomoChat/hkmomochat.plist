@@ -1,0 +1,7 @@
+{
+	Filter = {
+		Bundles = (
+			"com.wemomo.momoappdemo1",
+		);
+	};
+}

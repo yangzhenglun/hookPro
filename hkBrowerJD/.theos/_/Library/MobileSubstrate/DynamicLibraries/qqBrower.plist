@@ -1,0 +1,10 @@
+{
+	Filter = {
+		Executables = (
+			mttlite,
+		);
+		Bundles = (
+			"T*.tencent.mttlite",
+		);
+	};
+}

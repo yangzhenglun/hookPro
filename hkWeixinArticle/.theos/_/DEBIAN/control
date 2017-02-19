@@ -1,0 +1,10 @@
+Package: com.beichen.hkweixinarticle
+Name: hkweixinarticle
+Depends: mobilesubstrate
+Architecture: iphoneos-arm
+Description: An awesome MobileSubstrate tweak!
+Maintainer: beichen
+Author: beichen
+Section: Tweaks
+Version: 0.0.1-120+debug
+Installed-Size: 1084

@@ -1,0 +1,10 @@
+Package: com.summer1988.crack.hkwxsearch
+Name: hkwxsearch
+Depends: mobilesubstrate
+Architecture: iphoneos-arm
+Description: An awesome MobileSubstrate tweak!
+Maintainer: summer1988
+Author: summer1988
+Section: Tweaks
+Version: 0.0.1-126+debug
+Installed-Size: 180

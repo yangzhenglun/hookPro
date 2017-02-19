@@ -1,0 +1,10 @@
+Package: com.beichen.hkwxcheckaccount
+Name: hkwxcheckaccount
+Depends: mobilesubstrate
+Architecture: iphoneos-arm
+Description: An awesome MobileSubstrate tweak!
+Maintainer: beichen
+Author: beichen
+Section: Tweaks
+Version: 0.0.1-6+debug
+Installed-Size: 140

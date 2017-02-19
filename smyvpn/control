@@ -1,0 +1,9 @@
+Package: com.summer1988.vpn
+Name: SMYVPN
+Depends: mobilesubstrate
+Version: 4.0.0
+Architecture: iphoneos-arm
+Description: An awesome MobileSubstrate tweak!
+Maintainer: summer1988
+Author: summer1988
+Section: Tweaks

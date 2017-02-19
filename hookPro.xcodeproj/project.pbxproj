@@ -7,14 +7,39 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		68049E0A1E53FF9400669650 /* aftemplate in Resources */ = {isa = PBXBuildFile; fileRef = 68049E091E53FF9400669650 /* aftemplate */; };
+		680805E01E2B4BD4004045FE /* mycontacts in Resources */ = {isa = PBXBuildFile; fileRef = 680805DF1E2B4BD4004045FE /* mycontacts */; };
+		682A7E0C1E4AE80000E3EEED /* Preferences in Resources */ = {isa = PBXBuildFile; fileRef = 682A7E0B1E4AE80000E3EEED /* Preferences */; };
+		682A7E0E1E4AE8F300E3EEED /* hkPreferences in Resources */ = {isa = PBXBuildFile; fileRef = 682A7E0D1E4AE8F200E3EEED /* hkPreferences */; };
+		683229841E1CE52500D39A24 /* hkSpringBoard in Resources */ = {isa = PBXBuildFile; fileRef = 683229831E1CE52500D39A24 /* hkSpringBoard */; };
+		683229861E1CF1A400D39A24 /* hkWeiXinPlugins in Resources */ = {isa = PBXBuildFile; fileRef = 683229851E1CF1A400D39A24 /* hkWeiXinPlugins */; };
+		685BD5A51E516E9600354634 /* Preferences2 in Resources */ = {isa = PBXBuildFile; fileRef = 685BD5A31E516E9500354634 /* Preferences2 */; };
+		685BD5A61E516E9600354634 /* smyvpn in Resources */ = {isa = PBXBuildFile; fileRef = 685BD5A41E516E9500354634 /* smyvpn */; };
 		687C5E1D1E14C953002167C4 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 687C5E1C1E14C953002167C4 /* main.m */; };
-		687C5E201E14C953002167C4 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 687C5E1F1E14C953002167C4 /* AppDelegate.m */; };
-		687C5E231E14C953002167C4 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 687C5E221E14C953002167C4 /* ViewController.m */; };
 		687C5E261E14C953002167C4 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 687C5E241E14C953002167C4 /* Main.storyboard */; };
 		687C5E281E14C953002167C4 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 687C5E271E14C953002167C4 /* Assets.xcassets */; };
 		687C5E2B1E14C953002167C4 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 687C5E291E14C953002167C4 /* LaunchScreen.storyboard */; };
 		687C5E361E14C953002167C4 /* hookProTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 687C5E351E14C953002167C4 /* hookProTests.m */; };
 		687C5E411E14C953002167C4 /* hookProUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = 687C5E401E14C953002167C4 /* hookProUITests.m */; };
+		68A9128D1E14F79E005460B8 /* hkfodderweixin in Resources */ = {isa = PBXBuildFile; fileRef = 68A9128C1E14F79E005460B8 /* hkfodderweixin */; };
+		68AD90921E14CB52006E6152 /* hkBrowerJD in Resources */ = {isa = PBXBuildFile; fileRef = 68AD90911E14CB52006E6152 /* hkBrowerJD */; };
+		68AD90941E14CB60006E6152 /* JD4iPhone(5.4.1) in Resources */ = {isa = PBXBuildFile; fileRef = 68AD90931E14CB60006E6152 /* JD4iPhone(5.4.1) */; };
+		68AD90961E14CB6F006E6152 /* TBheaders-5.10.2 in Resources */ = {isa = PBXBuildFile; fileRef = 68AD90951E14CB6F006E6152 /* TBheaders-5.10.2 */; };
+		68AD90981E14CB81006E6152 /* WeChat in Resources */ = {isa = PBXBuildFile; fileRef = 68AD90971E14CB81006E6152 /* WeChat */; };
+		68AD90A41E14CBAA006E6152 /* hkjd in Resources */ = {isa = PBXBuildFile; fileRef = 68AD90991E14CBA7006E6152 /* hkjd */; };
+		68AD90A51E14CBAA006E6152 /* hkmttileTB in Resources */ = {isa = PBXBuildFile; fileRef = 68AD909A1E14CBA7006E6152 /* hkmttileTB */; };
+		68AD90A61E14CBAA006E6152 /* hkregwx in Resources */ = {isa = PBXBuildFile; fileRef = 68AD909B1E14CBA7006E6152 /* hkregwx */; };
+		68AD90A71E14CBAA006E6152 /* hkWeChat in Resources */ = {isa = PBXBuildFile; fileRef = 68AD909C1E14CBA8006E6152 /* hkWeChat */; };
+		68AD90A81E14CBAA006E6152 /* hkweixin in Resources */ = {isa = PBXBuildFile; fileRef = 68AD909D1E14CBA8006E6152 /* hkweixin */; };
+		68AD90A91E14CBAA006E6152 /* hkWeixinArticle in Resources */ = {isa = PBXBuildFile; fileRef = 68AD909E1E14CBA8006E6152 /* hkWeixinArticle */; };
+		68AD90AA1E14CBAA006E6152 /* hkWeixinAttention in Resources */ = {isa = PBXBuildFile; fileRef = 68AD909F1E14CBA8006E6152 /* hkWeixinAttention */; };
+		68AD90AB1E14CBAA006E6152 /* hkWeixinSendCard in Resources */ = {isa = PBXBuildFile; fileRef = 68AD90A01E14CBA9006E6152 /* hkWeixinSendCard */; };
+		68AD90AC1E14CBAA006E6152 /* hkwxCheckAccount in Resources */ = {isa = PBXBuildFile; fileRef = 68AD90A11E14CBA9006E6152 /* hkwxCheckAccount */; };
+		68AD90AD1E14CBAA006E6152 /* hkwxJD in Resources */ = {isa = PBXBuildFile; fileRef = 68AD90A21E14CBA9006E6152 /* hkwxJD */; };
+		68AD90AE1E14CBAA006E6152 /* hkwxsearch in Resources */ = {isa = PBXBuildFile; fileRef = 68AD90A31E14CBAA006E6152 /* hkwxsearch */; };
+		68BAB50C1E4C05DC0088B8F5 /* hkMomoChat in Resources */ = {isa = PBXBuildFile; fileRef = 68BAB50B1E4C05DB0088B8F5 /* hkMomoChat */; };
+		68F65ABC1E14C9A900F18741 /* hktaobao in Resources */ = {isa = PBXBuildFile; fileRef = 68F65ABB1E14C9A900F18741 /* hktaobao */; };
+		68FCBF241E46343D0030E994 /* MomoChat in Resources */ = {isa = PBXBuildFile; fileRef = 68FCBF231E46343D0030E994 /* MomoChat */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -35,12 +60,16 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		68049E091E53FF9400669650 /* aftemplate */ = {isa = PBXFileReference; lastKnownFileType = folder; path = aftemplate; sourceTree = "<group>"; };
+		680805DF1E2B4BD4004045FE /* mycontacts */ = {isa = PBXFileReference; lastKnownFileType = folder; path = mycontacts; sourceTree = "<group>"; };
+		682A7E0B1E4AE80000E3EEED /* Preferences */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Preferences; sourceTree = "<group>"; };
+		682A7E0D1E4AE8F200E3EEED /* hkPreferences */ = {isa = PBXFileReference; lastKnownFileType = folder; path = hkPreferences; sourceTree = "<group>"; };
+		683229831E1CE52500D39A24 /* hkSpringBoard */ = {isa = PBXFileReference; lastKnownFileType = folder; path = hkSpringBoard; sourceTree = "<group>"; };
+		683229851E1CF1A400D39A24 /* hkWeiXinPlugins */ = {isa = PBXFileReference; lastKnownFileType = folder; path = hkWeiXinPlugins; sourceTree = "<group>"; };
+		685BD5A31E516E9500354634 /* Preferences2 */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Preferences2; sourceTree = "<group>"; };
+		685BD5A41E516E9500354634 /* smyvpn */ = {isa = PBXFileReference; lastKnownFileType = folder; path = smyvpn; sourceTree = "<group>"; };
 		687C5E181E14C953002167C4 /* hookPro.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = hookPro.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		687C5E1C1E14C953002167C4 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
-		687C5E1E1E14C953002167C4 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
-		687C5E1F1E14C953002167C4 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
-		687C5E211E14C953002167C4 /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
-		687C5E221E14C953002167C4 /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
 		687C5E251E14C953002167C4 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		687C5E271E14C953002167C4 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		687C5E2A1E14C953002167C4 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
@@ -51,6 +80,25 @@
 		687C5E3C1E14C953002167C4 /* hookProUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = hookProUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		687C5E401E14C953002167C4 /* hookProUITests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = hookProUITests.m; sourceTree = "<group>"; };
 		687C5E421E14C953002167C4 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		68A9128C1E14F79E005460B8 /* hkfodderweixin */ = {isa = PBXFileReference; lastKnownFileType = folder; path = hkfodderweixin; sourceTree = "<group>"; };
+		68AD90911E14CB52006E6152 /* hkBrowerJD */ = {isa = PBXFileReference; lastKnownFileType = folder; path = hkBrowerJD; sourceTree = "<group>"; };
+		68AD90931E14CB60006E6152 /* JD4iPhone(5.4.1) */ = {isa = PBXFileReference; lastKnownFileType = folder; path = "JD4iPhone(5.4.1)"; sourceTree = "<group>"; };
+		68AD90951E14CB6F006E6152 /* TBheaders-5.10.2 */ = {isa = PBXFileReference; lastKnownFileType = folder; path = "TBheaders-5.10.2"; sourceTree = "<group>"; };
+		68AD90971E14CB81006E6152 /* WeChat */ = {isa = PBXFileReference; lastKnownFileType = folder; path = WeChat; sourceTree = "<group>"; };
+		68AD90991E14CBA7006E6152 /* hkjd */ = {isa = PBXFileReference; lastKnownFileType = folder; path = hkjd; sourceTree = "<group>"; };
+		68AD909A1E14CBA7006E6152 /* hkmttileTB */ = {isa = PBXFileReference; lastKnownFileType = folder; path = hkmttileTB; sourceTree = "<group>"; };
+		68AD909B1E14CBA7006E6152 /* hkregwx */ = {isa = PBXFileReference; lastKnownFileType = folder; path = hkregwx; sourceTree = "<group>"; };
+		68AD909C1E14CBA8006E6152 /* hkWeChat */ = {isa = PBXFileReference; lastKnownFileType = folder; path = hkWeChat; sourceTree = "<group>"; };
+		68AD909D1E14CBA8006E6152 /* hkweixin */ = {isa = PBXFileReference; lastKnownFileType = folder; path = hkweixin; sourceTree = "<group>"; };
+		68AD909E1E14CBA8006E6152 /* hkWeixinArticle */ = {isa = PBXFileReference; lastKnownFileType = folder; path = hkWeixinArticle; sourceTree = "<group>"; };
+		68AD909F1E14CBA8006E6152 /* hkWeixinAttention */ = {isa = PBXFileReference; lastKnownFileType = folder; path = hkWeixinAttention; sourceTree = "<group>"; };
+		68AD90A01E14CBA9006E6152 /* hkWeixinSendCard */ = {isa = PBXFileReference; lastKnownFileType = folder; path = hkWeixinSendCard; sourceTree = "<group>"; };
+		68AD90A11E14CBA9006E6152 /* hkwxCheckAccount */ = {isa = PBXFileReference; lastKnownFileType = folder; path = hkwxCheckAccount; sourceTree = "<group>"; };
+		68AD90A21E14CBA9006E6152 /* hkwxJD */ = {isa = PBXFileReference; lastKnownFileType = folder; path = hkwxJD; sourceTree = "<group>"; };
+		68AD90A31E14CBAA006E6152 /* hkwxsearch */ = {isa = PBXFileReference; lastKnownFileType = folder; path = hkwxsearch; sourceTree = "<group>"; };
+		68BAB50B1E4C05DB0088B8F5 /* hkMomoChat */ = {isa = PBXFileReference; lastKnownFileType = folder; path = hkMomoChat; sourceTree = "<group>"; };
+		68F65ABB1E14C9A900F18741 /* hktaobao */ = {isa = PBXFileReference; lastKnownFileType = folder; path = hktaobao; sourceTree = "<group>"; };
+		68FCBF231E46343D0030E994 /* MomoChat */ = {isa = PBXFileReference; lastKnownFileType = folder; path = MomoChat; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -81,6 +129,33 @@
 		687C5E0F1E14C953002167C4 = {
 			isa = PBXGroup;
 			children = (
+				68049E091E53FF9400669650 /* aftemplate */,
+				685BD5A41E516E9500354634 /* smyvpn */,
+				68BAB50B1E4C05DB0088B8F5 /* hkMomoChat */,
+				682A7E0D1E4AE8F200E3EEED /* hkPreferences */,
+				680805DF1E2B4BD4004045FE /* mycontacts */,
+				683229851E1CF1A400D39A24 /* hkWeiXinPlugins */,
+				683229831E1CE52500D39A24 /* hkSpringBoard */,
+				68A9128C1E14F79E005460B8 /* hkfodderweixin */,
+				68AD909D1E14CBA8006E6152 /* hkweixin */,
+				68F65ABB1E14C9A900F18741 /* hktaobao */,
+				68AD90991E14CBA7006E6152 /* hkjd */,
+				68AD909A1E14CBA7006E6152 /* hkmttileTB */,
+				68AD909B1E14CBA7006E6152 /* hkregwx */,
+				68AD909C1E14CBA8006E6152 /* hkWeChat */,
+				68AD909E1E14CBA8006E6152 /* hkWeixinArticle */,
+				68AD909F1E14CBA8006E6152 /* hkWeixinAttention */,
+				68AD90A01E14CBA9006E6152 /* hkWeixinSendCard */,
+				68AD90A11E14CBA9006E6152 /* hkwxCheckAccount */,
+				68AD90A21E14CBA9006E6152 /* hkwxJD */,
+				68AD90A31E14CBAA006E6152 /* hkwxsearch */,
+				68FCBF231E46343D0030E994 /* MomoChat */,
+				685BD5A31E516E9500354634 /* Preferences2 */,
+				68AD90971E14CB81006E6152 /* WeChat */,
+				682A7E0B1E4AE80000E3EEED /* Preferences */,
+				68AD90951E14CB6F006E6152 /* TBheaders-5.10.2 */,
+				68AD90931E14CB60006E6152 /* JD4iPhone(5.4.1) */,
+				68AD90911E14CB52006E6152 /* hkBrowerJD */,
 				687C5E1A1E14C953002167C4 /* hookPro */,
 				687C5E341E14C953002167C4 /* hookProTests */,
 				687C5E3F1E14C953002167C4 /* hookProUITests */,
@@ -101,10 +176,6 @@
 		687C5E1A1E14C953002167C4 /* hookPro */ = {
 			isa = PBXGroup;
 			children = (
-				687C5E1E1E14C953002167C4 /* AppDelegate.h */,
-				687C5E1F1E14C953002167C4 /* AppDelegate.m */,
-				687C5E211E14C953002167C4 /* ViewController.h */,
-				687C5E221E14C953002167C4 /* ViewController.m */,
 				687C5E241E14C953002167C4 /* Main.storyboard */,
 				687C5E271E14C953002167C4 /* Assets.xcassets */,
 				687C5E291E14C953002167C4 /* LaunchScreen.storyboard */,
@@ -243,9 +314,36 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				68FCBF241E46343D0030E994 /* MomoChat in Resources */,
+				68BAB50C1E4C05DC0088B8F5 /* hkMomoChat in Resources */,
+				682A7E0C1E4AE80000E3EEED /* Preferences in Resources */,
+				68AD90941E14CB60006E6152 /* JD4iPhone(5.4.1) in Resources */,
+				68AD90AE1E14CBAA006E6152 /* hkwxsearch in Resources */,
 				687C5E2B1E14C953002167C4 /* LaunchScreen.storyboard in Resources */,
+				68AD90981E14CB81006E6152 /* WeChat in Resources */,
+				682A7E0E1E4AE8F300E3EEED /* hkPreferences in Resources */,
+				68AD90A41E14CBAA006E6152 /* hkjd in Resources */,
+				68AD90A81E14CBAA006E6152 /* hkweixin in Resources */,
+				68AD90A61E14CBAA006E6152 /* hkregwx in Resources */,
+				68AD90A51E14CBAA006E6152 /* hkmttileTB in Resources */,
+				680805E01E2B4BD4004045FE /* mycontacts in Resources */,
+				68AD90921E14CB52006E6152 /* hkBrowerJD in Resources */,
+				68A9128D1E14F79E005460B8 /* hkfodderweixin in Resources */,
+				683229861E1CF1A400D39A24 /* hkWeiXinPlugins in Resources */,
+				68AD90AD1E14CBAA006E6152 /* hkwxJD in Resources */,
+				68F65ABC1E14C9A900F18741 /* hktaobao in Resources */,
 				687C5E281E14C953002167C4 /* Assets.xcassets in Resources */,
 				687C5E261E14C953002167C4 /* Main.storyboard in Resources */,
+				685BD5A51E516E9600354634 /* Preferences2 in Resources */,
+				683229841E1CE52500D39A24 /* hkSpringBoard in Resources */,
+				68AD90AB1E14CBAA006E6152 /* hkWeixinSendCard in Resources */,
+				68AD90AC1E14CBAA006E6152 /* hkwxCheckAccount in Resources */,
+				68AD90AA1E14CBAA006E6152 /* hkWeixinAttention in Resources */,
+				68AD90961E14CB6F006E6152 /* TBheaders-5.10.2 in Resources */,
+				685BD5A61E516E9600354634 /* smyvpn in Resources */,
+				68049E0A1E53FF9400669650 /* aftemplate in Resources */,
+				68AD90A91E14CBAA006E6152 /* hkWeixinArticle in Resources */,
+				68AD90A71E14CBAA006E6152 /* hkWeChat in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -270,8 +368,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				687C5E231E14C953002167C4 /* ViewController.m in Sources */,
-				687C5E201E14C953002167C4 /* AppDelegate.m in Sources */,
 				687C5E1D1E14C953002167C4 /* main.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -496,6 +592,7 @@
 				687C5E471E14C953002167C4 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		687C5E481E14C953002167C4 /* Build configuration list for PBXNativeTarget "hookProTests" */ = {
 			isa = XCConfigurationList;
@@ -504,6 +601,7 @@
 				687C5E4A1E14C953002167C4 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		687C5E4B1E14C953002167C4 /* Build configuration list for PBXNativeTarget "hookProUITests" */ = {
 			isa = XCConfigurationList;
@@ -512,6 +610,7 @@
 				687C5E4D1E14C953002167C4 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

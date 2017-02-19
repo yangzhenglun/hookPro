@@ -1,0 +1,9 @@
+{
+	Filter = {
+		Bundles = (
+			"com.apple.SpringBoard",
+			"com.360buy.jdmobile",
+			ALS,
+		);
+	};
+}

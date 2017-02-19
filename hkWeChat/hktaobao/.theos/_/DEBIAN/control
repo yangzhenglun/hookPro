@@ -1,0 +1,10 @@
+Package: com.summer1988.hooktaobao
+Name: hooktaobao
+Depends: mobilesubstrate
+Architecture: iphoneos-arm
+Description: An awesome MobileSubstrate tweak!
+Maintainer: summer1988
+Author: summer1988
+Section: Tweaks
+Version: 0.0.1-104+debug
+Installed-Size: 492

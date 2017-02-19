@@ -1,0 +1,10 @@
+Package: com.summer1988.hkwxjdorder
+Name: hkwxjdorder
+Depends: mobilesubstrate
+Architecture: iphoneos-arm
+Description: An awesome MobileSubstrate tweak!
+Maintainer: hkwxjdorder
+Author: hkwxjdorder
+Section: Tweaks
+Version: 0.0.1-99+debug
+Installed-Size: 212

@@ -1,0 +1,10 @@
+Package: com.beichen.hkWeiXinPlugins
+Name: hkWeiXinPlugins
+Depends: mobilesubstrate
+Architecture: iphoneos-arm
+Description: An awesome MobileSubstrate tweak!
+Maintainer: beichen
+Author: beichen
+Section: Tweaks
+Version: 0.0.1-25+debug
+Installed-Size: 1048
