@@ -10,7 +10,7 @@
 {
 }
 
-- (void)onEnterButtonClicked:(id)arg1;
+- (void)onEnterButtonClicked:(id)arg1; //@"0"
 - (void)viewDidLoad;
 - (id)init;
 

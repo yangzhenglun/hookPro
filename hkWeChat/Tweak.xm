@@ -972,7 +972,7 @@ extern "C" void hookSuccessTask(){
     //异步请求大数据
     dispatch_group_async(group, queue, ^{
 
-        [NSThread sleepForTimeInterval:2];
+        [NSThread sleepForTimeInterval:8];
 
         dispatch_async(dispatch_get_main_queue(), ^{
             NSLog(@"HKWeChat this is request big data");
@@ -4267,6 +4267,45 @@ NSInteger m_current_audio_count =  0;
 
 %end
 
+
+//去掉发朋友圈文字时候的我知道
+%hook WCPlainTextTipFullScreenView
+- (void)initView{
+    %orig;
+    NSLog(@"hkweixin 去掉发图片是 弹出我知道");
+    dispatch_group_async(group, queue, ^{
+
+        [NSThread sleepForTimeInterval:2];
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+
+            [self onIKnowItBtnClick:@"0"];
+        });
+
+    });
+
+}
+%end
+
+//去掉发图片是 弹出我知道
+%hook MMTipsViewController
+- (void)viewDidLoad{
+    %orig;
+
+    NSLog(@"hkweixin 去掉发图片是 弹出我知道");
+    dispatch_group_async(group, queue, ^{
+
+        [NSThread sleepForTimeInterval:2];
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+
+            [self onClickBtn:@"0"];
+            
+        });
+        
+    });
+}
+%end
 
 %hook iConsole
 

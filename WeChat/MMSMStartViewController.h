@@ -18,7 +18,7 @@
 - (void).cxx_destruct;
 - (void)onCrashReportFinished;
 - (void)onServerConfigUpdateFinished:(_Bool)arg1;
-- (void)onNextButtonClicked:(id)arg1;
+- (void)onNextButtonClicked:(id)arg1; //[#0x19099f10 onNextButtonClicked:@"1"] 下一步
 - (void)layoutLogoView;
 - (void)layoutViews;
 - (void)viewDidLoad;

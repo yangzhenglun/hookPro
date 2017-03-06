@@ -1264,14 +1264,14 @@ void doAlert(id self, BOOL state) {
 
 %hook TBHomePageNoticeView
 - (void)configView{
-    %orig;
+//    %orig;
     //NSLog(@"TBHK - ORDER HOOK TBHomePageNoticeView:--------configView--------------");
 }
 %end
 
 %hook TBHomePageFirstBannerView
 - (void)didScrollPage:(id)arg1 atIndex:(long long)arg2{
-    %orig;
+//    %orig;
     // NSLog(@"TBHK - ORDER HOOK TBHomePageFirstBannerView:  %@", arg1);
 }
 
@@ -1280,23 +1280,23 @@ void doAlert(id self, BOOL state) {
 %hook  TBCycleScrollView
 - (void)loadData{
     // NSLog(@"TBHK - ORDER HOOK TBCycleScrollView:---------------loadData--------");
-     %orig;
+//     %orig;
 }
 - (void)reloadData{
     // NSLog(@"TBHK - ORDER HOOK TBCycleScrollView:-----------reloadData------------");
-     %orig;
+//     %orig;
 }
 %end
 
 %hook  TBNewMemberFirstPayView
 - (void)scrollViewDidScroll:(id)arg1{
     // NSLog(@"TBHK - ORDER HOOK TBNewMemberFirstPayView:-----------scrollViewDidScroll------------");
-     %orig;
+//     %orig;
 }
 
 - (void)configViews{
     //  NSLog(@"TBHK - ORDER HOOK TBNewMemberFirstPayView:-----------configViews------------");
-    %orig;
+//    %orig;
 }
 
 %end
@@ -1305,26 +1305,26 @@ void doAlert(id self, BOOL state) {
 %hook TBHomeGridView
 - (void)reloadData{
     // NSLog(@"TBHK - ORDER HOOK TBHomeGridView:-----------reloadData------------");
-    %orig;
+//    %orig;
 }
 %end
 
 //淘宝头条
 %hook TTViewProxy
-//- (id)initWithFrame:(struct CGRect)arg1{
-//    return nil;
-//}
+- (id)initWithFrame:(struct CGRect)arg1{
+    return nil;
+}
 %end
 
 
 %hook TBViewController
 - (void)viewDidLoad{
     //  NSLog(@"TBHK - ORDER HOOK TBViewController:-----------viewDidLoad------------");
-    %orig;
+//    %orig;
 }
 - (void)presentModalViewController:(id)arg1 animated:(BOOL)arg2{
     //         NSLog(@"TBHK - ORDER HOOK TBViewController:-----------presentModalViewController------------");
-    %orig;
+//    %orig;
 
 }
 - (void)dismissModalViewControllerAnimated:(BOOL)arg1{

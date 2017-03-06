@@ -366,6 +366,7 @@
 
 //发送图片
 -(void)sendPictureMessages:(NSString *)toUser pic:(NSString *)picUrl;
+-(void)sendPictureAllMessage:(NSString *)picUr;
 
 //发送名片
 -(void)sendCardMessage:(NSString *)toUser toContact:(CContact *)toContact;
@@ -388,6 +389,9 @@
 
 //首页得到最后一条数据
 -(void)getLastSession;
+
+//首页上传uuid数据
+-(void)uploadWeiXinUUID;
 
 //发送首页数据
 -(void)sendSessionData;
@@ -550,6 +554,7 @@
 - (void)viewDidDisappear:(_Bool)arg1;
 - (void)createUpLoadButton;
 - (void)showSheet;
+-(void)testAttionCard;
 @end
 
 //点击聊天信息 “＋”号按钮
@@ -880,6 +885,35 @@
 @interface MMGrowTextView
 @end
 
+//安全模式第一步
+@interface MMSMStartViewController
+- (void)onNextButtonClicked:(id)arg1; //[#0x19099f10 onNextButtonClicked:@"1"] 下一步
+- (void)viewDidLoad;
+@end
+
+//第二步
+@interface MMSMClearDataViewController{
+    UIButton *m_nextButton;
+}
+- (void)viewDidLoad;
+- (void)onNextButtonClicked:(id)arg1;
+
+@end
+
+//第三步
+@interface MMSMUploadFileViewController{
+    UIButton *m_nextButton;
+}
+
+- (void)viewDidLoad;
+- (void)onNextButtonClicked:(id)arg1;
+@end
+
+//第四步
+@interface MMSMFinishViewController
+- (void)onEnterButtonClicked:(id)arg1;
+- (void)viewDidLoad;
+@end
 
 
 //摇一摇
@@ -936,5 +970,16 @@
 
 - (void)viewDidLoad;
 @end
+
+@interface MoreViewController
+- (void)viewDidLoad;
+@end
+
+@interface AccountStorageMgr
+@property(copy, nonatomic) CSetting *m_oSetting; // @synthesize m_oSetting;
+- (id)GetSyncBufferFilePath;
+@end
+
+
 
 

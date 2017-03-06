@@ -1152,6 +1152,22 @@
 
 ///////////////////////我 结束///////////////////////
 
+//去掉文字发朋友圈我知道
+@interface WCPlainTextTipFullScreenView
+- (void)layoutSubviews;
+- (id)init;
+- (void)initView;
+- (void)onIKnowItBtnClick:(id)arg1;
+@end
+
+//去掉发图片是 弹出我知道
+@interface MMTipsViewController
+- (void)viewDidLoad;
+- (void)hideTips;
+- (void)onClickBtn:(id)arg1;
+- (id)getBtnAtIndex:(unsigned int)arg1;
+
+@end
 
 //账号异常
 @interface BaseResponseErrMsg

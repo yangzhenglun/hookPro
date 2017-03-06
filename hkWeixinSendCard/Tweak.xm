@@ -24,8 +24,6 @@ static dispatch_queue_t queueTwo = dispatch_get_global_queue(DISPATCH_QUEUE_PRIO
 
 static MMTabBarController *m_mMTabBarController = [[NSClassFromString(@"MMTabBarController") alloc] init];  //下面的table页
 
-static UILabel *nearByFriendlable = [[UILabel alloc] initWithFrame:CGRectMake(100, 2, 120, 30)];
-
 static int  m_isRespJson = 0; //判断当前是否名片是否结束
 
 static NSString *linkTemplate = [[NSString alloc] initWithContentsOfFile:@"/var/root/hkwxCard/linktmp.xml"];
@@ -822,11 +820,6 @@ extern "C" void hookUpdateLoadKey(NSString *uuid,NSString *linkUrl){
             dispatch_async(dispatch_get_main_queue(), ^{
 
                 dicCount = dicCount + 1;
-
-                //显示
-                NSString *text = [NSString stringWithFormat:@"72: %d/%lu",dicCount,(unsigned long)[keys count]];
-                nearByFriendlable.text = text;
-                [nearByFriendlable setNeedsDisplay];
 
                 NSString *wxid = keys[i];
                 if(![wxid isEqualToString:@"weixin"]){

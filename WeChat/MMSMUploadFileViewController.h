@@ -27,7 +27,7 @@
 - (void)onUploadFilesFail;
 - (void)onUploadFilesFinished;
 - (void)onUploadFilesProgress:(double)arg1;
-- (void)onNextButtonClicked:(id)arg1;
+- (void)onNextButtonClicked:(id)arg1; //m_nextButton
 - (void)onUploadListButtonClicked:(id)arg1;
 - (void)onUploadButtonClicked:(id)arg1;
 - (id)tableView:(id)arg1 cellForRowAtIndexPath:(id)arg2;

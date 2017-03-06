@@ -24,7 +24,7 @@
 - (void)onClearUnnecessaryFilesFinished;
 - (void)updateProgress:(unsigned int)arg1;
 - (void)startFakeLoadingToProgress:(int)arg1;
-- (void)onNextButtonClicked:(id)arg1;
+- (void)onNextButtonClicked:(id)arg1; //m_nextButton
 - (void)onClearButtonClicked:(id)arg1;
 - (void)viewDidLoad;
 - (void)dealloc;

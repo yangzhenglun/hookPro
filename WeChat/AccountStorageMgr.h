@@ -36,7 +36,7 @@
 - (id)GetSyncBuffer;
 - (_Bool)SaveSyncBuffer:(id)arg1;
 - (_Bool)MergeAndSaveSyncBuffer:(id)arg1;
-- (id)GetSyncBufferFilePath;
+- (id)GetSyncBufferFilePath;  ///var/mobile/Containers/Data/Application/9FABC731-D0CA-4D0C-BF6D-F4E29889CD1E/Documents/5e076d79618b9059744ad4f6e5244407/syncbuffer.lst"
 - (void)ClearLocalInfo;
 - (void)ClearAllLocalInfo;
 - (void)SaveLocalInfo:(_Bool)arg1;

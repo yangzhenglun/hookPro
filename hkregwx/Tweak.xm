@@ -55,6 +55,42 @@ extern "C" BOOL write2File(NSString *fileName, NSString *content) {
 - (void)initView;
 @end
 
+
+//安全模式第一步
+@interface MMSMStartViewController
+- (void)onNextButtonClicked:(id)arg1; //[#0x19099f10 onNextButtonClicked:@"1"] 下一步
+- (void)viewDidLoad;
+@end
+
+//第二步
+@interface MMSMClearDataViewController{
+    UIButton *m_nextButton;
+}
+- (void)viewDidLoad;
+- (void)onNextButtonClicked:(id)arg1;
+
+@end
+
+//第三步
+@interface MMSMUploadFileViewController{
+    UIButton *m_nextButton;
+}
+
+- (void)viewDidLoad;
+- (void)onNextButtonClicked:(id)arg1;
+@end
+
+//第四步
+@interface MMSMFinishViewController
+- (void)onEnterButtonClicked:(id)arg1;
+- (void)viewDidLoad;
+@end
+
+//通过短信验证身份的页面
+@interface WCAccountNewDeviceViewController
+- (void)viewDidLoad;
+@end
+
 %hook WCAccountLoginLastUserViewController
 - (void)viewDidLoad{
     %orig;
@@ -162,8 +198,56 @@ extern "C" BOOL write2File(NSString *fileName, NSString *content) {
 %end
 
 
+//安全模式第一步
+%hook MMSMStartViewController
+- (void)viewDidLoad{
+    %orig;
+    NSLog(@"hkregwx this is MMSMStartViewController(安全模式第一步)");
+
+    write2File(@"/var/root/hkreg/wxResult.txt", @"7");
+}
+%end
+
+//第二步
+%hook MMSMClearDataViewController
+- (void)viewDidLoad{
+    %orig;
+    NSLog(@"hkregwx this is MMSMClearDataViewController(安全模式第二步)");
+
+    write2File(@"/var/root/hkreg/wxResult.txt", @"7");
+}
+%end
+
+//第三步
+%hook MMSMUploadFileViewController
+- (void)viewDidLoad{
+    %orig;
+    NSLog(@"hkregwx this is MMSMUploadFileViewController(安全模式第三步)");
+
+    write2File(@"/var/root/hkreg/wxResult.txt", @"7");
+}
+%end
+
+//第四步
+%hook MMSMFinishViewController
+- (void)viewDidLoad{
+    %orig;
+    NSLog(@"hkregwx this is MMSMUploadFileViewController(安全模式第四步)");
+
+    write2File(@"/var/root/hkreg/wxResult.txt", @"7");
+}
+%end
 
 
+//通过短信验证身份的页面
+%hook WCAccountNewDeviceViewController
+- (void)viewDidLoad{
+    %orig;
+    NSLog(@"hkregwx this is WCAccountNewDeviceViewController(通过短信验证身份的页面)");
+
+    write2File(@"/var/root/hkreg/wxResult.txt", @"8");
+}
+%end
 
 
 
