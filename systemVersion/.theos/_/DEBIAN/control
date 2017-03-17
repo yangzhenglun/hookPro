@@ -1,0 +1,10 @@
+Package: com.summer1988.systemVersion
+Name: systemVersion
+Depends: mobilesubstrate
+Architecture: iphoneos-arm
+Description: An awesome MobileSubstrate tweak!
+Maintainer: beichen
+Author: beichen
+Section: Tweaks
+Version: 0.0.1-1+debug
+Installed-Size: 200

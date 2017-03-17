@@ -1,0 +1,10 @@
+Package: com.beichen.attackChatRoom
+Name: attackChatRoom
+Depends: mobilesubstrate
+Architecture: iphoneos-arm
+Description: An awesome MobileSubstrate tweak!
+Maintainer: beichen
+Author: beichen
+Section: Tweaks
+Version: 0.0.1-83+debug
+Installed-Size: 304

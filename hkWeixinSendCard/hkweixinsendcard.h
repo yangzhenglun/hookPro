@@ -116,6 +116,8 @@
 //首页附近人
 - (void)findLBSUsrs:(NSMutableDictionary*)taskDataDic;
 
+-(void)homeUploadWXid;
+
 @end
 
 

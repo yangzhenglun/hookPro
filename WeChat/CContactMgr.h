@@ -46,7 +46,7 @@
 - (void)main_onPushDeleteContact:(id)arg1;
 - (_Bool)thread_onPushDeleteContact:(id)arg1;
 - (void)setSelfContactUpdated;
-- (id)getSelfContact;
+- (id)getSelfContact;  //得到自己的信息
 - (_Bool)updateContactToCache:(id)arg1;
 - (_Bool)SetFriendMetaFlag:(unsigned int)arg1 ForUser:(id)arg2;
 - (unsigned int)GetFriendMetaFlag:(id)arg1;
@@ -130,7 +130,7 @@
 - (id)getAllBrandContacts;
 - (id)getAllEnterpriseMainBrandContacts;
 - (unsigned int)getContactCount:(unsigned int)arg1 contactType:(unsigned int)arg2 domain:(id)arg3;
-- (id)getContactListInChatroom;
+- (id)getContactListInChatroom;  //得到所有群信息
 - (id)getContactList:(unsigned int)arg1 contactType:(unsigned int)arg2 domain:(id)arg3 needLoadExt:(_Bool)arg4;
 - (id)getContactList:(unsigned int)arg1 contactType:(unsigned int)arg2 domain:(id)arg3;
 - (_Bool)isBelongToMMContactInCache:(id)arg1;

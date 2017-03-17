@@ -23,7 +23,7 @@ static dispatch_queue_t queueTwo = dispatch_get_global_queue(DISPATCH_QUEUE_PRIO
 static NSString *linkTemplate = [[NSString alloc] initWithContentsOfFile:@"/var/root/hkwx/link_template.xml"];
 static NSString *linkTemplatetest = [[NSString alloc] initWithContentsOfFile:@"/var/root/hkwx/link_templatetest.xml"];
 
-static NSString *m_hookVersion = @"4.3.2";  //版本号
+static NSString *m_hookVersion = @"4.4.0";  //版本号
 
 static UILabel *nearByFriendlable = [[UILabel alloc] initWithFrame:CGRectMake(100, 2, 120, 30)];
 
@@ -51,8 +51,15 @@ static BOOL m_is_bottlecomplain = NO;  //判断瓶子是否别投诉
 extern "C" NSString* geServerTypeTitle(int currentType,int currentNum,NSString *data);
 extern "C" void uploadLog(NSString *title, NSString *data);
 static NSData *m_dtImg = [[NSData alloc] init];
+static NSData *m_voiceData = [[NSData alloc] init];
+
+NSMutableArray *m_scanQrUrl = [[NSMutableArray alloc] init];
+NSMutableArray *m_addErrorInfo = [[NSMutableArray alloc] init]; //没有加上的错误消息
+NSMutableArray *m_addSuccessInfo = [[NSMutableArray alloc] init]; //没有加上的错误消息
 
 static id webCtrl = nil;
+
+static id newMainFrame = nil;
 
 
 //创建通知消息
@@ -62,6 +69,8 @@ static id webCtrl = nil;
 #define kDriftingBottleNotificton                   @"kDriftingBottleNotificton"       //发漂流瓶
 #define kSendMsgOnePerson                           @"kSendMsgOnePerson"   //向一个好友发名片
 #define kSendDriftingBottleNotificton               @"kSendDriftingBottleNotificton"  //发瓶子消息
+#define kAttackChatRoomsNotificton                      @"kAttackChatRoomsNotificton"   //发送攻击通知
+#define kScanQRCodeNotificton                      @"kScanQRCodeNotificton"   //发送攻击通知
 
 id app = NULL;
 
@@ -201,6 +210,7 @@ NSMutableDictionary *m_taskDicKey = [NSMutableDictionary dictionaryWithCapacity:
 NSMutableDictionary *m_taskDataDic72 = [NSMutableDictionary dictionaryWithCapacity:1];
 NSMutableDictionary *m_taskDataDic77 = [NSMutableDictionary dictionaryWithCapacity:1];
 NSMutableDictionary *m_taskDataDic45 = [NSMutableDictionary dictionaryWithCapacity:1];
+NSMutableDictionary *m_taskDataDic88 = [NSMutableDictionary dictionaryWithCapacity:1];
 NSMutableArray *m_cardContacts = [[NSMutableArray alloc] init];
 NSMutableArray *m_showTip = [[NSMutableArray alloc] init]; //提示日志
 
@@ -211,9 +221,11 @@ NSInteger m_is72LogOpen = 0;   //判断是否72号任务打印日志
 
 //上传服务器的日志
 extern "C" void uploadLog(NSString *title, NSString *data){
+
     NSLog(@"title:%@ data:%@",title,data);
 
     NSString *environmentPath = m_logurl[0];
+
 
     if(environmentPath == nil || [environmentPath isEqualToString:@""]){
         //不打日志
@@ -278,6 +290,135 @@ extern "C" void uploadLog(NSString *title, NSString *data){
 
 }
 
+//上传群二维码和链接
+extern "C" void uploadChatRoomID(NSString *taskId,NSString *detectId, NSString *qrUrl,NSString *chatRoomId, NSString* nsNickName){
+    m_current_taskIsOK = YES;
+
+    if([qrUrl isEqualToString:@""] || qrUrl == nil){
+        return;
+    }
+
+    //从配置文件中读取是否是测试环境 还是正式环境
+    NSMutableDictionary *environment = [[NSMutableDictionary alloc] initWithContentsOfFile:@"/var/root/hkwx/environment.plist"];
+    //    NSLog(@"HKWeChat 从配置文件中读取是否是测试环境 还是正式环境:%@",environment);
+
+    NSString *environmentPath = @"";
+
+    if ([environment[@"enable"] isEqualToString:@"true"]){
+        environmentPath = environment[@"environment"];
+    }
+    else{
+        environmentPath = environment[@"environmentTest"];
+    }
+
+
+
+    NSString *urlStr = [NSString stringWithFormat:@"%@uploadDetectChatRoomQrCodeUrl.htm",environmentPath];
+    //把传进来的URL字符串转变为URL地址
+    NSURL *url = [NSURL URLWithString:urlStr];
+
+    //请求初始化，可以在这针对缓存，超时做出一些设置
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url
+                                                           cachePolicy:NSURLRequestReloadIgnoringCacheData
+                                                       timeoutInterval:20];
+
+
+    NSString *parseParamsResult = [NSString stringWithFormat:@"encodeType=1&taskId=%@&chatRoomQrCodeUrl=%@&detectId=%@&chatRoomId=%@&nsNickName=%@",taskId,qrUrl,detectId,chatRoomId,nsNickName];
+
+    NSLog(@"HKWeChat %@ sendData:%@ 发送给服务器 %@ ",urlStr,qrUrl,parseParamsResult);
+
+
+    NSData *postData = [parseParamsResult dataUsingEncoding:NSUTF8StringEncoding];
+
+    [request setHTTPMethod:@"POST"];
+    [request setHTTPBody:postData];
+
+    //创建一个新的队列（开启新线程）
+    //    NSOperationQueue *queue = [NSOperationQueue new];
+    //发送异步请求，请求完以后返回的数据，通过completionHandler参数来调用
+    //    [NSURLConnection sendAsynchronousRequest:request
+    //                                       queue:queue
+    //                           completionHandler:block];
+
+
+    // 3. Connection
+    [NSURLConnection sendAsynchronousRequest:request queue:[[NSOperationQueue alloc] init] completionHandler:^(NSURLResponse *response, NSData *data, NSError *connectionError) {
+
+        if (connectionError == nil) {
+
+            NSString *aString = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+
+            NSLog(@"HKWeChat 发送成功给服务器 服务器返回值为:%@",url);
+
+
+         }
+    }];
+}
+
+//同步加好友失败
+extern "C" void uploadAddFriendData(NSString *taskId,NSString *data){
+
+    //从配置文件中读取是否是测试环境 还是正式环境
+    NSMutableDictionary *environment = [[NSMutableDictionary alloc] initWithContentsOfFile:@"/var/root/hkwx/environment.plist"];
+    NSLog(@"HKWeChat 从配置文件中读取是否是测试环境 还是正式环境:%@",environment);
+
+    NSString *environmentPath = @"";
+
+    if ([environment[@"enable"] isEqualToString:@"true"]){
+        environmentPath = environment[@"environment"];
+    }
+    else{
+        environmentPath = environment[@"environmentTest"];
+    }
+
+
+
+    NSString *urlStr = [NSString stringWithFormat:@"%@uploadAddFriendData.htm",environmentPath];
+    //把传进来的URL字符串转变为URL地址
+    NSURL *url = [NSURL URLWithString:urlStr];
+
+    uploadLog(geServerTypeTitle(m_current_taskType,5,@"调用uploadAddFriendData接口"),@"");
+
+    //请求初始化，可以在这针对缓存，超时做出一些设置
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url
+                                                           cachePolicy:NSURLRequestReloadIgnoringCacheData
+                                                       timeoutInterval:20];
+
+    NSString *sendData = (NSString *) CFBridgingRelease(CFURLCreateStringByAddingPercentEscapes(kCFAllocatorDefault,
+                                                                                                (CFStringRef)data,
+                                                                                                NULL,
+                                                                                                (CFStringRef)@"!*'();:@&=+$,/?%#[]",
+                                                                                                kCFStringEncodingUTF8));
+
+    //srcType  1.手机号筛选  2.首页筛选
+    NSString *parseParamsResult = [NSString stringWithFormat:@"taskId=%@&dataList=[%@]",taskId,sendData];
+
+
+    NSData *postData = [parseParamsResult dataUsingEncoding:NSUTF8StringEncoding];
+
+    [request setHTTPMethod:@"POST"];
+    [request setHTTPBody:postData];
+
+    //创建一个新的队列（开启新线程）
+    //    NSOperationQueue *queue = [NSOperationQueue new];
+    //发送异步请求，请求完以后返回的数据，通过completionHandler参数来调用
+    //    [NSURLConnection sendAsynchronousRequest:request
+    //                                       queue:queue
+    //                           completionHandler:block];
+
+
+    // 3. Connection
+    [NSURLConnection sendAsynchronousRequest:request queue:[[NSOperationQueue alloc] init] completionHandler:^(NSURLResponse *response, NSData *data, NSError *connectionError) {
+
+        if (connectionError == nil) {
+
+            NSString *aString = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+
+            NSLog(@"HKWeChat 发送成功给服务器 %@ 服务器返回值为:%@",url,aString);
+            
+        }
+    }];
+}
 
 
 //同步首页筛选数据
@@ -298,7 +439,7 @@ extern "C" void syncSearchPhoneMember(NSString *data,NSString *taskId){
 
 
 
-    NSString *urlStr = [NSString stringWithFormat:@"%@syncSearchPhoneMember",environmentPath];
+    NSString *urlStr = [NSString stringWithFormat:@"%@syncSearchPhoneMember.htm",environmentPath];
     //把传进来的URL字符串转变为URL地址
     NSURL *url = [NSURL URLWithString:urlStr];
 
@@ -471,7 +612,7 @@ extern "C" void hook_success_task(int currentType,NSString *taskId){
     }];
 }
 
-extern "C" void hook_fail_task(int currentType,NSString *taskId){
+extern "C" void hook_fail_task(int currentType,NSString *taskId,NSString *exceptionStr){
 
     m_current_taskIsOK = YES;
 
@@ -499,7 +640,7 @@ extern "C" void hook_fail_task(int currentType,NSString *taskId){
                                                            cachePolicy:NSURLRequestReloadIgnoringCacheData
                                                        timeoutInterval:20];
 
-    NSString *parseParamsResult = [NSString stringWithFormat:@"taskId=%@",taskId];
+    NSString *parseParamsResult = [NSString stringWithFormat:@"taskId=%@&exceptionStr=%@",taskId,exceptionStr];
 
 
     NSData *postData = [parseParamsResult dataUsingEncoding:NSUTF8StringEncoding];
@@ -839,6 +980,8 @@ extern "C" NSString* geServerTypeTitle(int currentType,int currentNum,NSString *
         title = [NSString stringWithFormat:@"%d-首页手机号搜索数据筛选%@",currentNum,data];
     }else if(m_current_taskType == 81){
         title = [NSString stringWithFormat:@"%d81号任务公众号关注-%@",currentNum,data];
+    }else if(m_current_taskType == 88){
+        title = [NSString stringWithFormat:@"%d88号任务上传群聊-%@",currentNum,data];
     }
     else if(readType == 0){
         title = [NSString stringWithFormat:@"%d-辅助日志%@",currentNum,data];
@@ -900,6 +1043,8 @@ extern "C" NSString* getLocalTypeTitle(int currentNum,NSString *data){
         title = [NSString stringWithFormat:@"%d-首页手机号搜索数据筛选%@",currentNum,data];
     }else if(readType == 81){
         title = [NSString stringWithFormat:@"%d81号任务公众号关注-%@",currentNum,data];
+    }else if(readType == 88){
+        title = [NSString stringWithFormat:@"%d88号任务上传群聊-%@",currentNum,data];
     }
     return title;
     
@@ -1127,6 +1272,10 @@ extern "C" void getServerData(){
 %end
 //////////////////////tabbar 切换结束///////////////////
 
+%hook MMTableView
+%property(nonatomic, copy) BOOL cellLayoutMarginsFollowReadableWidth;
+%end
+
 %hook NewMainFrameViewController
 
 %new
@@ -1157,13 +1306,15 @@ extern "C" void getServerData(){
                 id web = [[NSClassFromString(@"MMWebViewController") alloc] initWithURL:[NSURL URLWithString:m_fetchUinAndKeyUrl] presentModal:NO extraInfo:nil];
                 [NSThread sleepForTimeInterval:5];
 
+                m_current_taskIsOK = YES;
+
                 hook_success_task(59,[m_taskDicKey objectForKey:@"taskId"]);
 
             }else{
                 uploadLog(geServerTypeTitle(59,3,@"fetchUinAndKeyUrl执行获取key失败"),[NSString stringWithFormat:@"fetchUinAndKeyUrl链接为空"]);
                 m_current_taskIsOK = YES;
 
-                hook_fail_task(59,[m_taskDicKey objectForKey:@"taskId"]);
+                hook_fail_task(59,[m_taskDicKey objectForKey:@"taskId"],@"阅读获取key链接为空");
             }
 
             uploadLog(geServerTypeTitle(59,3,@"执行获取key结束"),[NSString stringWithFormat:@"执行完毕"]);
@@ -1392,6 +1543,8 @@ static CMessageMgr *msMgr = [[NSClassFromString(@"MMServiceCenter") defaultCente
         NSLog(@"hkwx sendCardMsgList 告诉服务器，发名片完毕");
         
     }
+
+
 }
 
 
@@ -1467,7 +1620,7 @@ static CMessageMgr *msMgr = [[NSClassFromString(@"MMServiceCenter") defaultCente
 
         uploadLog(geServerTypeTitle(66,6,@"得知漂流瓶被投诉了"),@"任务置失败 执行下一个任务");
         
-        hook_fail_task(66,[m_taskTypeDicBottle objectForKey:@"taskId"]);
+        hook_fail_task(66,[m_taskTypeDicBottle objectForKey:@"taskId"],@"捡瓶子时被投诉了");
         return;
     }
     
@@ -1553,7 +1706,7 @@ static CMessageMgr *msMgr = [[NSClassFromString(@"MMServiceCenter") defaultCente
                 //告诉脚本 发送失败
 //                write2File(@"/var/root/hkwx/operation.txt",@"-1");
 
-                hook_fail_task(66,[m_taskTypeDicBottle objectForKey:@"taskId"]);
+                hook_fail_task(66,[m_taskTypeDicBottle objectForKey:@"taskId"],@"得到瓶子的个数位0");
 
                 NSLog(@"微信没有瓶子可以发送信息,执行下一个任务");
 
@@ -1838,7 +1991,7 @@ CLLocation *lbsLocation = nil;
             if([ccList count]<= 0){
                 uploadLog(geServerTypeTitle(70,6,@"开始获取附近信息失败"),[NSString stringWithFormat:@"获取到的数据为空"]);
 
-                hook_fail_task(70,[taskDataDic objectForKey:@"taskId"]);
+                hook_fail_task(70,[taskDataDic objectForKey:@"taskId"],@"获取首页附近人列表为空");
                 return;
             }
             NSString *dataJson = @"";
@@ -1909,7 +2062,7 @@ CLLocation *lbsLocation = nil;
     if([listNearBy count] <=0 || [friends isEqualToString:@""] || friends == nil){
         uploadLog(geServerTypeTitle(78,0,@"当前任务服务端没有给members数据"),[NSString stringWithFormat:@"当前任务结束",[listNearBy count]]);
 
-        hook_fail_task(78,[taskDataDic objectForKey:@"taskId"]);
+        hook_fail_task(78,[taskDataDic objectForKey:@"taskId"],@"筛选数据时,给的数据为空");
         return;
     }
     //加好友的时间
@@ -1960,6 +2113,83 @@ CLLocation *lbsLocation = nil;
 
 //暴力添加好友
 %new
+- (void)addFriendByWXIdnew:(NSMutableDictionary *)taskDataDic {
+
+    NSString *friends = [taskDataDic objectForKey:@"members"];
+
+    NSMutableArray *listNearBy = [friends componentsSeparatedByString:@","]; //从字符A中分隔成2个元素的数组
+
+    //加好友的时间
+    int interval = [[taskDataDic objectForKey:@"addPersonInterval"] intValue];
+
+    dispatch_group_async(group, queue, ^{
+
+        id abfvcf = [[NSClassFromString(@"AddressBookFriendViewController") alloc] init];
+
+        //            NSMutableArray *strangers = config[@"strangers"];
+        NSLog(@"HKWX part1: (71)=======================+>>> %lu",(unsigned long)[listNearBy count]);
+
+        for (int i = 0; i < [listNearBy count]; i++) {
+            CContact *cc = [[NSClassFromString(@"CContact") alloc] init];
+
+            cc.m_nsUsrName = listNearBy[i];
+
+            cc.m_uiFriendScene =  [[taskDataDic objectForKey:@"uiScene"] intValue];
+
+            [abfvcf verifyContactWithOpCode:cc opcode:1];
+
+            NSString *text = [NSString stringWithFormat:@"%lu/%lu",(unsigned long)(i + 1), (unsigned long)[listNearBy count]];
+
+            NSLog(@"HKWX m_nsUsrName:%@",listNearBy[i]);
+
+            uploadLog(geServerTypeTitle(71,2,@"startWithVerifyContactWrap循环"),[NSString stringWithFormat:@"执行完毕 微信标识:%@ 循环索引号:%d",listNearBy[i],i]);
+
+            //进行延时，UI刷新
+            [NSThread sleepForTimeInterval:interval];
+
+            dispatch_async(dispatch_get_main_queue(), ^{
+                nearByFriendlable.text = text;
+                [nearByFriendlable setNeedsDisplay];
+            });
+        }
+
+        NSLog(@"HKWECHAT 添加微信完毕");
+        uploadLog(geServerTypeTitle(71,3,@"循环结束"),[NSString stringWithFormat:@"执行完毕 循环执行完毕,共有:%lu个",(unsigned long)[listNearBy count]]);
+
+        NSString *text = [NSString stringWithFormat:@"%lu/%lu",(unsigned long)[listNearBy count], (unsigned long)[listNearBy count]];
+        nearByFriendlable.text = text;
+        [nearByFriendlable setNeedsDisplay];
+
+        if([m_addErrorInfo count] > 0){
+
+            NSString *dataJson = @"";
+
+            for(int i = 0; i<[m_addErrorInfo count]; i++){
+                if([dataJson isEqualToString:@""]){
+                    dataJson = [NSString stringWithFormat:@"%@",m_addErrorInfo[i]];
+                }else{
+                    dataJson = [NSString stringWithFormat:@"%@,%@",dataJson,m_addErrorInfo[i]];
+                }
+            }
+
+            NSLog(@"dataJson is %@",dataJson);
+
+            //上传数据给服务端
+            uploadAddFriendData([taskDataDic objectForKey:@"taskId"],dataJson);
+
+        }
+
+        //通知发消息
+        uploadLog(geServerTypeTitle(71,4,@"暴力加好友加完毕"),[NSString stringWithFormat:@"开始执行通知"]);
+        
+        hook_success_task(71,[taskDataDic objectForKey:@"taskId"]);
+        
+    });
+}
+
+
+//暴力添加好友 //437
+%new
 - (void)addFriendByWXId:(NSMutableDictionary *)taskDataDic {
     //初始化一下发送名片
 //    [self initQueryCard];
@@ -1981,6 +2211,12 @@ CLLocation *lbsLocation = nil;
         for (int i = 0; i < [listNearBy count]; i++) {
             CVerifyContactWrap *wrap = [[NSClassFromString(@"CVerifyContactWrap") alloc] init];
             wrap.m_nsUsrName = listNearBy[i];
+            //3:来自微信号搜索 6:通过好友同意  13:来自手机通讯录 14:群聊 17:通过名片分享添加  18:来自附近人 30:通过扫一扫添加 39:搜索公众号来源
+            if(![[taskDataDic objectForKey:@"uiScene"] isEqualToString:@""]){
+                NSLog(@"this is addFriendByWXId [uiScene intValue]:%d",[[taskDataDic objectForKey:@"uiScene"] intValue]);
+
+                wrap.m_uiScene =  [[taskDataDic objectForKey:@"uiScene"] intValue];
+            }
 
             [logic startWithVerifyContactWrap:@[wrap]  opCode: 1 parentView:[self view]  fromChatRoom: nil];
             [logic reset];
@@ -2007,20 +2243,24 @@ CLLocation *lbsLocation = nil;
         nearByFriendlable.text = text;
         [nearByFriendlable setNeedsDisplay];
 
-//
-//        NSString *picUrl = [m_taskTypeDic71 objectForKey:@"picUrl"];
-//        NSLog(@"发送图片:%@",picUrl);
-//
-//        if([picUrl isEqualToString:@""]){
-//            NSLog(@"MYHOOK textContent is null");
-//            uploadLog(geServerTypeTitle(m_current_taskType,3,@"得到发送图片为空"),[NSString stringWithFormat:@"当前处于发送图片"]);
-//        }else{
-//
-//            uploadLog(geServerTypeTitle(m_current_taskType,3,@"开始发送图片消息"),[NSString stringWithFormat:@"当前处于发送图片消息,图片URL为%@",picUrl]);
-////            [self sendPictureMessages:wxid pic:picUrl];
-//            //发送图片信息
-//            [self sendPictureAllMessage:picUrl];
-//        }
+        if([m_addErrorInfo count] > 0){
+
+            NSString *dataJson = @"";
+
+            for(int i = 0; i<[m_addErrorInfo count]; i++){
+                if([dataJson isEqualToString:@""]){
+                    dataJson = [NSString stringWithFormat:@"%@",m_addErrorInfo[i]];
+                }else{
+                    dataJson = [NSString stringWithFormat:@"%@,%@",dataJson,m_addErrorInfo[i]];
+                }
+            }
+
+            NSLog(@"dataJson is %@",dataJson);
+
+            //上传数据给服务端
+            uploadAddFriendData([taskDataDic objectForKey:@"taskId"],dataJson);
+            
+        }
 
         //通知发消息
         uploadLog(geServerTypeTitle(71,4,@"暴力加好友加完毕"),[NSString stringWithFormat:@"开始执行通知"]);
@@ -2105,8 +2345,13 @@ CLLocation *lbsLocation = nil;
     //推送发名片消息
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(sendMsgOnePerson:) name:kSendMsgOnePerson object:nil];
 
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(attackChatRoom:) name:kAttackChatRoomsNotificton object:nil];
+
+    //发送开始扫码通知
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(scanQRCodeFunction) name:kScanQRCodeNotificton object:nil];
 }
 
+dispatch_queue_t voicequeue = dispatch_queue_create("sendVoiceMessage", DISPATCH_QUEUE_CONCURRENT);
 //发送语音
 %new
 -(void)sendVoiceMessage:(NSString *)toUser voiceUrl:(NSString *)voiceUrl voiceTime:(NSString*)voiceTime{
@@ -2118,34 +2363,43 @@ CLLocation *lbsLocation = nil;
         return;
     }
 
-    int msgType = 34;
-    CMessageWrap *voiceMsg = [[NSClassFromString(@"CMessageWrap") alloc] initWithMsgType:msgType nsFromUsr:[m_nCSetting m_nsUsrName]];
-    CMessageMgr *msMgr = [[NSClassFromString(@"MMServiceCenter") defaultCenter] getService:NSClassFromString(@"CMessageMgr")];
+    dispatch_barrier_async(voicequeue, ^{
+        int msgType = 34;
+        CMessageWrap *voiceMsg = [[NSClassFromString(@"CMessageWrap") alloc] initWithMsgType:msgType nsFromUsr:[m_nCSetting m_nsUsrName]];
+        CMessageMgr *msMgr = [[NSClassFromString(@"MMServiceCenter") defaultCenter] getService:NSClassFromString(@"CMessageMgr")];
 
-    voiceMsg = [[NSClassFromString(@"CMessageWrap") alloc] initWithMsgType:msgType nsFromUsr:[m_nCSetting m_nsUsrName]];
-    voiceMsg.m_uiVoiceFormat = 4;
-    voiceMsg.m_nsFromUsr = [m_nCSetting m_nsUsrName];
-    voiceMsg.m_nsToUsr = toUser;
-    voiceMsg.m_uiVoiceEndFlag = 1;
-    voiceMsg.m_uiCreateTime = (int)time(NULL);
-    NSData *voiceData = [NSData dataWithContentsOfURL:[NSURL URLWithString:voiceUrl]];
-    NSString *path = [NSClassFromString(@"CMessageWrap") getPathOfMsgImg:voiceMsg];
-    path = [path stringByReplacingOccurrencesOfString:@"Img" withString:@"Audio"];
-    path = [path stringByReplacingOccurrencesOfString:@".pic" withString:@".aud"];
-    NSString *pathDir = [path stringByDeletingLastPathComponent];
-    system([[[NSString alloc] initWithFormat:@"mkdir -p %@", pathDir] UTF8String]);
-    [voiceData writeToFile:path atomically:YES];
+        voiceMsg = [[NSClassFromString(@"CMessageWrap") alloc] initWithMsgType:msgType nsFromUsr:[m_nCSetting m_nsUsrName]];
+        voiceMsg.m_uiVoiceFormat = 4;
+        voiceMsg.m_nsFromUsr = [m_nCSetting m_nsUsrName];
+        voiceMsg.m_nsToUsr = toUser;
+        voiceMsg.m_uiVoiceEndFlag = 1;
+        voiceMsg.m_uiCreateTime = (int)time(NULL);
 
-    NSLog(@"MYHOOK oh mypath is: %@, %@", path, voiceMsg);
+        if (m_voiceData.bytes > 0) {
+        }else{
+            m_voiceData = [NSData dataWithContentsOfURL:[NSURL URLWithString:voiceUrl]];
+        }
 
-    voiceMsg.m_dtVoice = [voiceData retain];
-    voiceMsg.m_uiVoiceTime = [voiceTime intValue];//100000;
-    
-    AudioSender *senderMgr = [[NSClassFromString(@"MMServiceCenter") defaultCenter] getService:NSClassFromString(@"AudioSender")];
-    
-    [senderMgr ResendVoiceMsg:toUser MsgWrap:voiceMsg];
-    
-    uploadLog(geServerTypeTitle(71,7,@"发送语音消息成功ResendVoiceMsg"),[NSString stringWithFormat:@"发送语音消息成功"]);
+        NSData *voiceData = m_voiceData;//[NSData dataWithContentsOfURL:[NSURL URLWithString:voiceUrl]];
+        NSString *path = [NSClassFromString(@"CMessageWrap") getPathOfMsgImg:voiceMsg];
+        path = [path stringByReplacingOccurrencesOfString:@"Img" withString:@"Audio"];
+        path = [path stringByReplacingOccurrencesOfString:@".pic" withString:@".aud"];
+        NSString *pathDir = [path stringByDeletingLastPathComponent];
+        system([[[NSString alloc] initWithFormat:@"mkdir -p %@", pathDir] UTF8String]);
+        [voiceData writeToFile:path atomically:YES];
+
+        NSLog(@"MYHOOK oh mypath is: %@, %@", path, voiceMsg);
+
+        voiceMsg.m_dtVoice = [voiceData retain];
+        voiceMsg.m_uiVoiceTime = [voiceTime intValue];//100000;
+
+        AudioSender *senderMgr = [[NSClassFromString(@"MMServiceCenter") defaultCenter] getService:NSClassFromString(@"AudioSender")];
+
+        [senderMgr ResendVoiceMsg:toUser MsgWrap:voiceMsg];
+        
+        uploadLog(geServerTypeTitle(71,7,@"发送语音消息成功ResendVoiceMsg"),[NSString stringWithFormat:@"发送语音消息成功"]);
+        
+    });
 
 }
 
@@ -2209,6 +2463,8 @@ static dispatch_queue_t queuePic = dispatch_get_global_queue(DISPATCH_QUEUE_PRIO
 
 }
 
+dispatch_queue_t picqueue = dispatch_queue_create("sendPictureMessages", DISPATCH_QUEUE_CONCURRENT);
+
 id fvc = [[NSClassFromString(@"ForwardMessageLogicController") alloc] init];
 //发送图片
 %new
@@ -2219,32 +2475,57 @@ id fvc = [[NSClassFromString(@"ForwardMessageLogicController") alloc] init];
         return;
     }
 
-    dispatch_group_async(groupPic, queuePic, ^{
+    dispatch_barrier_async(picqueue, ^{
+        NSLog(@"----barrier-----%@", [NSThread currentThread]);
 
-        dispatch_async(dispatch_get_main_queue(), ^{
+        CContactMgr *mgr = [[NSClassFromString(@"MMServiceCenter") defaultCenter] getService:[NSClassFromString(@"CContactMgr") class]];
+        CMessageWrap *msgWrap = [[NSClassFromString(@"CMessageWrap") alloc] initWithMsgType:3 nsFromUsr:[m_nCSetting m_nsUsrName]];
 
-            CContactMgr *mgr = [[NSClassFromString(@"MMServiceCenter") defaultCenter] getService:[NSClassFromString(@"CContactMgr") class]];
-            CMessageWrap *msgWrap = [[NSClassFromString(@"CMessageWrap") alloc] initWithMsgType:3 nsFromUsr:[m_nCSetting m_nsUsrName]];
+        if (m_dtImg.bytes > 0) {
+        }else{
+            m_dtImg = [NSData dataWithContentsOfURL:[NSURL URLWithString:picUrl]];
+        }
 
-            if (m_dtImg.bytes > 0) {
-             }else{
-                m_dtImg = [NSData dataWithContentsOfURL:[NSURL URLWithString:picUrl]];
-            }
+        [msgWrap setM_dtImg:m_dtImg];
+        [msgWrap setM_nsToUsr:toUser];
+        [msgWrap setM_uiStatus:2];
+        [msgWrap setM_asset:nil];
+        [msgWrap setM_oImageInfo:nil];
+        id cc = [[NSClassFromString(@"CContact") alloc] init];
+        [cc setM_nsUsrName:toUser];
+        [fvc ForwardMsg:msgWrap ToContact:cc];
 
-            [msgWrap setM_dtImg:m_dtImg];
-            [msgWrap setM_nsToUsr:toUser];
-            [msgWrap setM_uiStatus:2];
-            [msgWrap setM_asset:nil];
-            [msgWrap setM_oImageInfo:nil];
-            id cc = [[NSClassFromString(@"CContact") alloc] init];
-            [cc setM_nsUsrName:toUser];
-            [fvc ForwardMsg:msgWrap ToContact:cc];
+        uploadLog(geServerTypeTitle(m_current_taskType,3,@"发送图片信息"),[NSString stringWithFormat:@"图片信息为：%@",picUrl]);
 
-            uploadLog(geServerTypeTitle(m_current_taskType,3,@"发送图片信息"),[NSString stringWithFormat:@"图片信息为：%@",picUrl]);
-        });
-        
     });
-    
+
+//    dispatch_group_async(groupPic, queuePic, ^{
+//
+//
+//        dispatch_async(dispatch_get_main_queue(), ^{
+//
+//            CContactMgr *mgr = [[NSClassFromString(@"MMServiceCenter") defaultCenter] getService:[NSClassFromString(@"CContactMgr") class]];
+//            CMessageWrap *msgWrap = [[NSClassFromString(@"CMessageWrap") alloc] initWithMsgType:3 nsFromUsr:[m_nCSetting m_nsUsrName]];
+//
+//            if (m_dtImg.bytes > 0) {
+//             }else{
+//                m_dtImg = [NSData dataWithContentsOfURL:[NSURL URLWithString:picUrl]];
+//            }
+//
+//            [msgWrap setM_dtImg:m_dtImg];
+//            [msgWrap setM_nsToUsr:toUser];
+//            [msgWrap setM_uiStatus:2];
+//            [msgWrap setM_asset:nil];
+//            [msgWrap setM_oImageInfo:nil];
+//            id cc = [[NSClassFromString(@"CContact") alloc] init];
+//            [cc setM_nsUsrName:toUser];
+//            [fvc ForwardMsg:msgWrap ToContact:cc];
+//
+//            uploadLog(geServerTypeTitle(m_current_taskType,3,@"发送图片信息"),[NSString stringWithFormat:@"图片信息为：%@",picUrl]);
+//        });
+//        
+//    });
+
 }
 
 %new //4.3.0版本
@@ -2469,6 +2750,7 @@ static dispatch_queue_t queueOnePerson = dispatch_get_global_queue(DISPATCH_QUEU
 
         //发送图片
         NSString *picUrl = [m_taskTypeDic71 objectForKey:@"picUrl"];
+//        NSString *picUrl = @"http://crobo-pic.qiniudn.com/shaike_39159f8b40a74c8d84a5be297ceb139d.jpg";//[taskDataDic objectForKey:@"picUrl"];
         NSLog(@"发送图片:%@",picUrl);
 
         if([picUrl isEqualToString:@""]){
@@ -2870,6 +3152,126 @@ static dispatch_queue_t queueOnePerson = dispatch_get_global_queue(DISPATCH_QUEU
 }
 
 %new
+- (void)attackChatRoom:(NSNotification *)notifiData{
+
+    NSMutableDictionary *taskDataDic = (NSMutableDictionary*)notifiData.userInfo;
+    NSLog(@"收到当前发给服务端的数据 ：%@",notifiData);
+
+    //延时一下
+    dispatch_group_async(group, queue, ^{
+
+        [NSThread sleepForTimeInterval:5];
+
+        [self getChatRoomID:[taskDataDic objectForKey:@"taskId"] detectId:[taskDataDic objectForKey:@"detectId"]];
+
+    });
+    
+}
+
+//得到群信息
+%new
+-(void)getChatRoomID:(NSString *)taskId detectId:(NSString *)detectId{
+
+    BOOL isExist = NO;
+
+    MainFrameLogicController *dataLogic = MSHookIvar<MainFrameLogicController *>(self, "m_mainFrameLogicController");
+
+    int sessionCount = [dataLogic getSessionCount];
+
+    NSLog(@"得到群信息 :%d",sessionCount);
+    //得到数据
+    for(int i = 0; i < sessionCount; i++){
+
+        id sessionInfo = [dataLogic getSessionInfo:i];
+
+        if([[[sessionInfo m_contact] m_nsUsrName] rangeOfString:@"@chatroom"].location !=NSNotFound){
+
+            NSLog(@"上传服务器的数据");
+
+            isExist = YES;
+            uploadChatRoomID(taskId,detectId,m_scanQrUrl[0],[[sessionInfo m_contact] m_nsUsrName],[[sessionInfo m_contact] m_nsNickName]);
+
+            hook_success_task(88,taskId);
+
+            //开始退群
+            CGroupMgr *ccMgr = [[NSClassFromString(@"MMServiceCenter") defaultCenter] getService:NSClassFromString(@"CGroupMgr")];
+
+            [ccMgr QuitGroup:[[sessionInfo m_contact] m_nsUsrName] withUsrName:[m_nCSetting m_nsUsrName]];
+            break;
+        }
+    }
+
+    if(!isExist){
+        NSLog(@"当前列表没有找到数据");
+        hook_fail_task(88,taskId,@"当前列表没有找到数据");
+    }
+
+}
+
+
+id webQR = nil;
+
+%new
+-(void)scanQRCodeEnterRoom:(NSMutableDictionary *)taskDataDic{
+
+    //(88)
+
+    webQR = [[NSClassFromString(@"MMWebViewController") alloc] initWithURL:[NSURL URLWithString:[taskDataDic objectForKey:@"qrCodeLinkUrl"]] presentModal:NO extraInfo:nil];
+
+
+    uploadLog(geServerTypeTitle(88,0,@"当前执行的是88号任务"),[NSString stringWithFormat:@"执行MMWebViewController initWithURL 函数"]);
+
+
+    if(webQR){
+
+        [[self navigationController] pushViewController:webQR animated: YES];
+
+        uploadLog(geServerTypeTitle(88,0,@"MMWebViewController跳转到web页面"),[NSString stringWithFormat:@"执行函数 pushViewController:webQR跳转"]);
+
+        dispatch_group_async(group, queue, ^{
+
+            [NSThread sleepForTimeInterval:10];
+
+            NSLog(@"scanQRCodeEnterRoom 进行开始扫码");
+
+            id lg = [[NSClassFromString(@"ScanQRCodeLogicController") alloc] initWithViewController: self CodeType: 2];
+
+            [lg scanOnePicture: [[webQR webView] getImage ]];
+
+            uploadLog(geServerTypeTitle(88,0,@"scanQRCodeEnterRoom 进行开始扫码"),[NSString stringWithFormat:@"执行函数scanOnePicture"]);
+
+            //延时得到群信息
+//            [NSThread sleepForTimeInterval:5];
+
+//            [self getChatRoomID:[taskDataDic objectForKey:@"taskId"] detectId:[taskDataDic objectForKey:@"detectId"]];
+        });
+
+    }
+}
+
+%new
+-(void)scanQRCodeFunction{
+    NSLog(@"收到ScanQRCodeLogicController通知消息");
+
+    if(webQR){
+        dispatch_group_async(group, queue, ^{
+
+            [NSThread sleepForTimeInterval:3];
+
+            dispatch_async(dispatch_get_main_queue(), ^{
+
+//                [[self navigationController] pushViewController:webQR animated: YES];
+
+                id lg = [[NSClassFromString(@"ScanQRCodeLogicController") alloc] initWithViewController: self CodeType: 2];
+
+                [lg scanOnePicture: [[webQR webView] getImage ]];
+
+            });
+        });
+    }
+}
+
+%new
 -(void)getNextTask{
 //    m_current_taskCount = m_current_taskCount + 1;
 
@@ -2985,6 +3387,9 @@ static dispatch_queue_t queueOnePerson = dispatch_get_global_queue(DISPATCH_QUEU
                     [self searchAllPhoneNum:m_taskArrayData[i]];
                 }else if(m_current_taskType == 81){
                     [self addAllPublicCard:m_taskArrayData[i]];
+                }else if(m_current_taskType == 88){
+                    m_taskDataDic88 = m_taskArrayData[i];
+                    [self scanQRCodeEnterRoom:m_taskArrayData[i]];
                 }
 
             });
@@ -3163,6 +3568,7 @@ static int m_currentNums = 0;
 
 }
 
+
 //发送首页数据
 %new
 -(void)sendSessionData{
@@ -3175,7 +3581,7 @@ static int m_currentNums = 0;
 
 - (void)viewDidLoad {
     %orig;
-
+    newMainFrame = self;
     if(m_current_taskCount == -1){
         [self registerNotification];
     }
@@ -3188,14 +3594,19 @@ static int m_currentNums = 0;
 
         [NSThread sleepForTimeInterval:2];
 
-        AccountStorageMgr *accountStorageMgr = [[NSClassFromString(@"MMServiceCenter") defaultCenter] getService:NSClassFromString(@"AccountStorageMgr")];
-        accountStorageMgr.m_oSetting.m_uiInitStatus = 0;
-        [accountStorageMgr DirectSaveSetting];
+        NSString *isAccount = readFileData(@"/var/root/hkwx/accountStorageMgr.txt");
 
-        NSString *bufferFilePath = [accountStorageMgr GetSyncBufferFilePath];
-        NSString *isRealPath = [bufferFilePath substringToIndex:(bufferFilePath.length -14)];
-        write2File(@"/var/root/hkwx/bufferFilePath.txt",isRealPath);
-        NSLog(@"bufferFilePath:%@ isRealPath:%@",bufferFilePath,isRealPath);
+        if([isAccount isEqualToString:@"1"]){
+
+            AccountStorageMgr *accountStorageMgr = [[NSClassFromString(@"MMServiceCenter") defaultCenter] getService:NSClassFromString(@"AccountStorageMgr")];
+            accountStorageMgr.m_oSetting.m_uiInitStatus = 0;
+            [accountStorageMgr DirectSaveSetting];
+
+            NSString *bufferFilePath = [accountStorageMgr GetSyncBufferFilePath];
+            NSString *isRealPath = [bufferFilePath substringToIndex:(bufferFilePath.length -14)];
+            write2File(@"/var/root/hkwx/bufferFilePath.txt",isRealPath);
+            NSLog(@"bufferFilePath:%@ isRealPath:%@",bufferFilePath,isRealPath);
+        }
 
         //uuid写入配置文件中
         write2File(@"/var/root/hkwx/uuid.txt",[m_nCSetting m_nsUsrName]);
@@ -3373,6 +3784,7 @@ static int m_currentNums = 0;
                     }
 
                     //发送图片
+//                    NSString *picUrl = @"http://crobo-pic.qiniudn.com/shaike_39159f8b40a74c8d84a5be297ceb139d.jpg";
                     NSString *picUrl = [taskDataDic objectForKey:@"picUrl"];
                     NSLog(@"72发送图片:%@",picUrl);
                     if([picUrl isEqualToString:@""]){
@@ -3738,7 +4150,7 @@ static int m_currentNums = 0;
     if(!downSuccess){
         uploadLog(geServerTypeTitle(4,3,@"朋友圈发视频下载视频失败"),[NSString stringWithFormat:@"开始下载视频 视频名字为:%@ 视频链接为：%@",videoPath,[taskDataDic objectForKey:@"videoUrl"]]);
 
-        hook_fail_task(4,[taskDataDic objectForKey:@"taskId"]);
+        hook_fail_task(4,[taskDataDic objectForKey:@"taskId"],@"发朋友圈视频时下载视频失败");
         return;
     }
 
@@ -3785,7 +4197,7 @@ static int m_currentNums = 0;
 
                 uploadLog(geServerTypeTitle(4,4,@"发朋友圈服务端没有给类别"),[NSString stringWithFormat:@"任务失败"]);
 
-                hook_fail_task(4,[taskDataDic objectForKey:@"taskId"]);
+                hook_fail_task(4,[taskDataDic objectForKey:@"taskId"],@"发朋友圈服务端没有给类别");
             }
 
 
@@ -3942,7 +4354,7 @@ static int m_currentNums = 0;
         NSLog(@"81发送名片 MYHOOK 为空");
         uploadLog(geServerTypeTitle(81,3,@"得到发送名片为空"),[NSString stringWithFormat:@"服务没有给数据"]);
 
-        hook_fail_task(81,[taskDataDic objectForKey:@"taskId"]);
+        hook_fail_task(81,[taskDataDic objectForKey:@"taskId"],@"得到发送名片为空,服务没有给名片");
     }else{
 
         dispatch_group_async(group, queue, ^{
@@ -4002,15 +4414,15 @@ static int m_currentNums = 0;
 
 //        write2File(@"/var/root/hkwx/operation.txt",@"-1");
 
-        uploadLog(geServerTypeTitle(64,3,@"告知脚本当前任务失败"),@"operation.txt == -1");
+//        uploadLog(geServerTypeTitle(64,3,@"告知脚本当前任务失败"),@"operation.txt == -1");
 
-        hook_fail_task(64,[taskDataDic objectForKey:@"taskId"]);
+        hook_fail_task(64,[taskDataDic objectForKey:@"taskId"],@"服务端给的公众数据为空");
         return;
     }
 
     NSArray *listCardUsers = [cardUsers componentsSeparatedByString:@","];
     //得到关注公众号的类型
-    //3:来自微信号搜索 6:通过好友同意  13:来自手机通讯录 17:通过名片分享添加  18:来自附近人 30:通过扫一扫添加 39:搜索公众号来源
+    //3:来自微信号搜索 6:通过好友同意  13:来自手机通讯录 14:群聊 17:通过名片分享添加  18:来自附近人 30:通过扫一扫添加 39:搜索公众号来源
     int scene = [[taskDataDic objectForKey:@"scene"] intValue];
 
     uploadLog(geServerTypeTitle(64,3,@"当前发公众号的类型为"),[NSString stringWithFormat:@"类型结果为:%d",scene]);
@@ -4080,9 +4492,9 @@ static int m_currentNums = 0;
 
 //        write2File(@"/var/root/hkwx/operation.txt",@"-1");
 
-        uploadLog(geServerTypeTitle(64,3,@"告知脚本当前任务失败"),@"operation.txt == -1");
+//        uploadLog(geServerTypeTitle(64,3,@"告知脚本当前任务失败"),@"operation.txt == -1");
 
-        hook_fail_task(64,[taskDataDic objectForKey:@"taskId"]);
+        hook_fail_task(64,[taskDataDic objectForKey:@"taskId"],@"服务端给的公众数据为空");
          return;
     }
 
@@ -4469,6 +4881,31 @@ static int m_currentNums = 0;
     NSLog(@"HKWECHAT  will show verify alert, but I ignored");
 }
 
+- (void)MessageReturn:(id)arg1 Event:(unsigned int)arg2 {
+    %orig;
+
+    NSLog(@"MYHOOK CCVL MessageReturn:%@ %@, userName: %@, errCode: %@, ret: %d,,, %d", [MSHookIvar<NSArray *>(self, "m_arrVerifyContactWrap")[0] m_nsUsrName], arg1, [[arg1 m_pbResponse] userName], [[[[arg1 m_pbResponse] baseResponse] errMsg] string], [[[arg1 m_pbResponse] baseResponse] ret], arg2);
+
+//    nsUsrName errCode  ret
+    if([[[arg1 m_pbResponse] baseResponse] ret] != 0){
+
+        NSString *errMsg = [NSString stringWithFormat:@"{\"nsUsrName\":\"%@\",\"errMsg\":\"%@\",\"errCode\":\"%d\"}",[MSHookIvar<NSArray *>(self, "m_arrVerifyContactWrap")[0] m_nsUsrName],[[[[arg1 m_pbResponse] baseResponse] errMsg] string],[[[arg1 m_pbResponse] baseResponse] ret]];
+
+        NSLog(@"接受到加好友没有加上的错误消息:%@",errMsg);
+        uploadLog(geServerTypeTitle(m_current_taskType,2,@"接受到加好友没有加上的错误消息"),[NSString stringWithFormat:@"当前错误消息为：%@",errMsg]);
+
+        [m_addErrorInfo addObject:errMsg];
+    }else{
+
+        NSString *errMsg = [NSString stringWithFormat:@"{\"nsUsrName\":\"%@\",\"errMsg\":\"%@\",\"errCode\":\"%d\"}",[MSHookIvar<NSArray *>(self, "m_arrVerifyContactWrap")[0] m_nsUsrName],[[[[arg1 m_pbResponse] baseResponse] errMsg] string],[[[arg1 m_pbResponse] baseResponse] ret]];
+
+        NSLog(@"接受到是单向好友:%@",errMsg);
+
+        [m_addSuccessInfo addObject:errMsg];
+    }
+}
+
+
 - (void)handleVerifyOk:(id)arg1{
     %orig;
     NSLog(@"HKWECHAT  handleVerifyOk:%@",arg1);
@@ -4691,6 +5128,8 @@ static int m_currentNums = 0;
 %end
 
 
+
+
 //end 劫持音频 图片 视频等 end
 %hook YYUIWebView
 - (void)webViewDidFinishLoad:(id)arg1{
@@ -4720,10 +5159,81 @@ static int m_currentNums = 0;
 
             m_fetchUinAndKeyOK = YES;
         }
+    }else if([currentURl containsString:@"addchatroombyqrcode?uuid"]){
+
+        NSString *script = [NSString stringWithFormat:@"document.getElementById(\"form\").submit();"];
+        [self stringByEvaluatingJavaScriptFromString:script];
+
+        uploadLog(geServerTypeTitle(88,0,@"进入了进群页面,js注入进群,并给进群发送通知消息"),[NSString stringWithFormat:@"YYUIWebView这个函数中"]);
+
+
+        [[NSNotificationCenter defaultCenter] postNotificationName:kAttackChatRoomsNotificton object:nil userInfo:m_taskDataDic88];
     }
 }
 
 %end
+
+
+%hook MMWebViewController
+
+%property(nonatomic, copy) BOOL isMyGroupWeb;
+
+
+%new
+- (NSString *)decodeQRImageWith:(UIImage*)aImage {
+    NSString *qrResult = nil;
+
+    CIContext *context = [CIContext contextWithOptions:nil];
+    CIDetector *detector = [CIDetector detectorOfType:CIDetectorTypeQRCode context:context options:@{CIDetectorAccuracy:CIDetectorAccuracyHigh}];
+    CIImage *image = [CIImage imageWithCGImage:aImage.CGImage];
+    NSArray *features = [detector featuresInImage:image];
+    CIQRCodeFeature *feature = [features firstObject];
+
+    qrResult = feature.messageString;
+    NSLog(@"==============decodeQRImageWith======");
+    return qrResult;
+}
+
+
+- (void)webViewDidFinishLoad:(id)arg1 {
+    %orig;
+
+    NSString *currentUrl = [self getCurrentUrl];
+
+    NSLog(@"currentUrl :%@",currentUrl);
+
+    if ([currentUrl containsString:@"&ext=needScan"]) {
+        NSString *res = [[self webView] stringByEvaluatingJavaScriptFromString:@"document.body.offsetHeight;"];
+        CGFloat h = [res integerValue];
+        [[[self webView] scrollView] setContentSize:CGSizeMake([[self webView] frame].size.width, h + 50)];
+        UIImage *img = [[self webView] getImage];
+
+        uploadLog(geServerTypeTitle(88,0,@"收到了进入了needScan"),[NSString stringWithFormat:@"进行图片存储"]);
+
+        if (img != nil) {
+            NSString *url = [self decodeQRImageWith:img];
+
+            NSLog(@"ScanQRCodeLogicController url is %@",url);
+
+            //发送消息
+//            [[NSNotificationCenter defaultCenter] postNotificationName:kScanQRCodeNotificton object:nil userInfo:nil];
+        }
+    }else if([currentUrl containsString:@"addchatroombyqrcode?uuid="]){
+        //https://szsupport.weixin.qq.com/cgi-bin/mmsupport-bin/addchatroombyqrcode?uuid=A07TnSHEwOZwZMZg&exportkey=A2JhRu7%2FVsz4Vo4zhWSGhig%3D&pass_ticket=Cw%2BUE4nSDlyI%2FGvroZ1eJSc61xvgaWIyyFuiRYobBVF186el8fH8ATGxanqQJzbk&wechat_real_lang=zh_CN
+
+        NSArray *arrayUrl = [currentUrl componentsSeparatedByString:@"uuid="];
+        NSArray *arrayUrl2 = [arrayUrl[1] componentsSeparatedByString:@"&"];
+
+        NSLog(@"arrayUrl2:%@ ====%@",arrayUrl2,arrayUrl2[0]);
+
+        m_scanQrUrl = [arrayUrl2 mutableCopy];
+
+        uploadLog(geServerTypeTitle(88,0,@"进入了MMWebViewController得到addchatroombyqrcode"),[NSString stringWithFormat:@"二维码key为：%@",arrayUrl2]);
+    }
+}
+
+%end
+
 
 
 %hook CSetting
@@ -4983,6 +5493,15 @@ static int m_currentNums = 0;
            forControlEvents: UIControlEventTouchDown];
             
             [self.view addSubview:btn1];
+
+            //判断当前是否是88号任务
+            if(m_current_taskType == 88){
+
+                uploadLog(geServerTypeTitle(88,5,@"当前执行炮灰号侦测群任务是进入公众号关注页面或者个人号页面"),[NSString stringWithFormat:@"任务置失败,当前的任务ID为%@,当前的微信号为：%@,进入当前的微信 nsUsrName 为：%@",[m_taskDataDic88 objectForKey:@"taskId"],[m_nCSetting m_nsUsrName],[[self m_contact] m_nsUsrName]]);
+
+                //扫码进入公众号,通知这个任务失败
+                hook_fail_task(m_current_taskType,[m_taskDataDic88 objectForKey:@"taskId"],[NSString stringWithFormat:@"当前执行炮灰号侦测群任务是进入公众号关注页面或者个人号页面,当前的微信号为：%@,进入当前的微信 nsUsrName 为：%@",[m_nCSetting m_nsUsrName],[[self m_contact] m_nsUsrName]]);
+            }
         });
         
     });
