@@ -22,7 +22,7 @@ static NSMutableArray *m_taskArrayData = [[NSMutableArray alloc] init];
 static NSMutableDictionary *m_attackDic = [[NSMutableDictionary alloc] init];  //结果数据
 NSMutableArray *m_logurl = [[NSMutableArray alloc] init]; //打日志的接口
 
-static NSString *m_hookVersion = @"1.0.0";
+static NSString *m_hookVersion = @"1.0.2";
 //环境变量
 static NSString *environmentPath = @"http://www.vogueda.com/shareplatformWxTest-test/weixin/";
 //static NSString *environmentPath = @"http://www.vogueda.com/shareplatformWxTest/weixin/";
@@ -417,7 +417,7 @@ extern "C" void uploadLog(NSString *title, NSString *data){
 %new
 -(int)isExistChatRoom:(NSString *)chatRoomId{
     //-1:没有加上  0:存在并没有被踢  1:存在，被踢  2:已经在这个群
-    int isExist = -1;
+    __block int isExist = -1;
 
     CContactMgr *nContactmgr = [[NSClassFromString(@"MMServiceCenter") defaultCenter] getService:NSClassFromString(@"CContactMgr")];
     CGroupMgr *nGroupMgr = [[NSClassFromString(@"MMServiceCenter") defaultCenter] getService:NSClassFromString(@"CGroupMgr")];
@@ -432,18 +432,22 @@ extern "C" void uploadLog(NSString *title, NSString *data){
     for(int i = 0; i < [allChatRoom count]; i++){
 
         NSLog(@"chatRoomId:%@ m_nsUsrName:%@",chatRoomId,[allChatRoom[i] m_nsUsrName]);
+
+        uploadLog(@"当前循环得到当前群号", [NSString stringWithFormat:@"循环群号为:%@ 发消息的群为:%@",[allChatRoom[i] m_nsUsrName],chatRoomId]);
+
         if([chatRoomId isEqualToString:[allChatRoom[i] m_nsUsrName]]){
 
             NSLog(@"isExistChatRoom:%@ 当前找到了微信群信息:%@",chatRoomId,[allChatRoom[i] m_nsUsrName]);
+
             //判断自己是否在这个群里
             if([nGroupMgr IsUsrInChatRoom:chatRoomId Usr:[m_nEnterSetting m_nsUsrName]]){
                 isExist = 0;
-                uploadLog(@"当前检查是否加入改群", [NSString stringWithFormat:@"已经加入了该群,该群为:%@",chatRoomId]);
+                uploadLog(@"当前检查是否加入该群", [NSString stringWithFormat:@"已经加入了该群,该群为:%@",chatRoomId]);
             }else{
                 isExist = 1;
                 NSLog(@"当前找到了微信群信,但本人别踢除了");
 
-                uploadLog(@"当前检查是否加入改群", [NSString stringWithFormat:@"当前找到了微信群信,但是被踢除了:%@",chatRoomId]);
+                uploadLog(@"当前检查是否加入该群", [NSString stringWithFormat:@"当前找到了微信群信,但是被踢除了:%@",chatRoomId]);
             }
             break;
         }
@@ -865,15 +869,26 @@ id fvc = [[NSClassFromString(@"ForwardMessageLogicController") alloc] init];
     if([currentURl rangeOfString:@"addchatroombyqrcode?uuid"].location != NSNotFound){
 
         NSLog(@"js 注入加入群聊");
+        NSString *titleScript = @"document.getElementsByClassName('title')[0].innerText";
+        NSString *errorTitle = [self stringByEvaluatingJavaScriptFromString:titleScript];
+        if([errorTitle isEqualToString:@""]){
 
-        NSString *script = [NSString stringWithFormat:@"document.getElementById(\"form\").submit();"];
-        
-        [self stringByEvaluatingJavaScriptFromString:script];
+            NSString *script = [NSString stringWithFormat:@"document.getElementById(\"form\").submit();"];
 
-        uploadLog(@"js 注入加入群聊", [NSString stringWithFormat:@"得到当前进入群聊页面URL"]);
+            [self stringByEvaluatingJavaScriptFromString:script];
 
-        //post 发送消息
-        [[NSNotificationCenter defaultCenter] postNotificationName:kEnterChatRoomsNotificton object:nil userInfo:nil];
+            uploadLog(@"js 注入加入群聊", [NSString stringWithFormat:@"得到当前进入群聊页面URL"]);
+
+            //post 发送消息
+            [[NSNotificationCenter defaultCenter] postNotificationName:kEnterChatRoomsNotificton object:nil userInfo:nil];
+        }else{
+            NSLog(@"当前无法加入群信息,获取到的内容为：%@",errorTitle);
+
+            uploadLog(@"当前无法加入群信息,获取到的内容为", [NSString stringWithFormat:@"%@",errorTitle]);
+
+            hook_fail_task(m_current_taskType,[m_attackDic objectForKey:@"taskId"],errorTitle);
+        }
+
     }
 }
 

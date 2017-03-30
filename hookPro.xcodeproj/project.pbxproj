@@ -45,6 +45,7 @@
 		68B950311E72E30B005D1257 /* attackChatRoom in Resources */ = {isa = PBXBuildFile; fileRef = 68B950301E72E30B005D1257 /* attackChatRoom */; };
 		68F65ABC1E14C9A900F18741 /* hktaobao in Resources */ = {isa = PBXBuildFile; fileRef = 68F65ABB1E14C9A900F18741 /* hktaobao */; };
 		68FCBF241E46343D0030E994 /* MomoChat in Resources */ = {isa = PBXBuildFile; fileRef = 68FCBF231E46343D0030E994 /* MomoChat */; };
+		68FDE22D1E84F38E0060B78A /* wxReadPlug in Resources */ = {isa = PBXBuildFile; fileRef = 68FDE22C1E84F38D0060B78A /* wxReadPlug */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -109,6 +110,7 @@
 		68B950301E72E30B005D1257 /* attackChatRoom */ = {isa = PBXFileReference; lastKnownFileType = folder; path = attackChatRoom; sourceTree = "<group>"; };
 		68F65ABB1E14C9A900F18741 /* hktaobao */ = {isa = PBXFileReference; lastKnownFileType = folder; path = hktaobao; sourceTree = "<group>"; };
 		68FCBF231E46343D0030E994 /* MomoChat */ = {isa = PBXFileReference; lastKnownFileType = folder; path = MomoChat; sourceTree = "<group>"; };
+		68FDE22C1E84F38D0060B78A /* wxReadPlug */ = {isa = PBXFileReference; lastKnownFileType = folder; path = wxReadPlug; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -139,6 +141,7 @@
 		687C5E0F1E14C953002167C4 = {
 			isa = PBXGroup;
 			children = (
+				68FDE22C1E84F38D0060B78A /* wxReadPlug */,
 				6801F5A01E76755D00F2D586 /* wxgroupmm */,
 				6801F59E1E76479F00F2D586 /* enterChatRoom */,
 				68B950301E72E30B005D1257 /* attackChatRoom */,
@@ -358,6 +361,7 @@
 				68B9502F1E729EBC005D1257 /* systemVersion in Resources */,
 				68AD90AC1E14CBAA006E6152 /* hkwxCheckAccount in Resources */,
 				68AD90AA1E14CBAA006E6152 /* hkWeixinAttention in Resources */,
+				68FDE22D1E84F38E0060B78A /* wxReadPlug in Resources */,
 				68AD90961E14CB6F006E6152 /* TBheaders-5.10.2 in Resources */,
 				6801F5A11E76755D00F2D586 /* wxgroupmm in Resources */,
 				685BD5A61E516E9600354634 /* smyvpn in Resources */,

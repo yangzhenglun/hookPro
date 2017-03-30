@@ -1,5 +1,8 @@
 #import "include/CContact.h"
-
+#import "include/ContactsDataLogic.h"
+#import "include/CSetting.h"
+#import "include/MMService.h"
+#import "include/MMServiceCenter.h"
 ///获取微信聊天的群ID
 @interface MMUIViewController : UIViewController
 
@@ -93,6 +96,30 @@
 @end
 
 
+//账号异常
+@interface WXPBGeneratedMessage
+- (id)init;
+- (id)baseResponse;
+@end
+
+
+@interface BaseResponseErrMsg : WXPBGeneratedMessage
++ (void)initialize;
+// Remaining properties
+@property(nonatomic) int action; // @dynamic action;
+@property(retain, nonatomic) NSString *cancel; // @dynamic cancel;
+@property(retain, nonatomic) NSString *content; // @dynamic content;
+@property(nonatomic) unsigned int countdown; // @dynamic countdown;
+@property(nonatomic) int delayConnSec; // @dynamic delayConnSec;
+@property(nonatomic) int dispSec; // @dynamic dispSec;
+@property(retain, nonatomic) NSString *ok; // @dynamic ok;
+@property(nonatomic) int showType; // @dynamic showType;
+@property(retain, nonatomic) NSString *title; // @dynamic title;
+@property(retain, nonatomic) NSString *url; // @dynamic url;
+
+@end
+
+
 @interface CMainControll
 - (void)onKickQuit;
 @end
@@ -126,9 +153,23 @@
 - (_Bool)AddGroupMember:(id)arg1 withMemberList:(id)arg2;
 @end
 
+@interface PhoneItemInfo
+@property(retain, nonatomic) NSString *phoneNum; // @synthesize phoneNum;
+@end
 
 
 
+
+@interface ContactsViewController
+- (void)viewDidAppear:(_Bool)arg;
+@end
+
+
+@interface AccountStorageMgr
+@property(copy, nonatomic) CSetting *m_oSetting; // @synthesize m_oSetting;
+- (id)GetSyncBufferFilePath;
+- (void)DirectSaveSetting;
+@end
 
 
 

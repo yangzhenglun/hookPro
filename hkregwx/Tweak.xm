@@ -7,8 +7,9 @@
 
 static dispatch_group_t group = dispatch_group_create();
 static dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+static CSetting *m_nCSetting = [[NSClassFromString(@"CSetting") alloc] init];  //下面的table页
 
-static NSString *environmentPath = @"http://www.vogueda.com/shareplatformWxTest-test/weixin/";
+//static NSString *environmentPath = @"http://www.vogueda.com/shareplatformWxTest-test/weixin/";
 static BOOL isEnterFirst = YES;
 
 extern "C" NSString * readFileData(NSString * fileName) {
@@ -22,10 +23,141 @@ extern "C" NSString * readFileData(NSString * fileName) {
         return @"";
     }
 }
+//打开文件
+extern "C" NSMutableDictionary * openFile(NSString * fileName) {
+    //    @autoreleasepool {
+    NSLog(@"HKWeChat file exists: %@", [[NSFileManager defaultManager] fileExistsAtPath:fileName] ? @"YES": @"NO");
+    NSString *strData = [NSString stringWithContentsOfFile:fileName encoding:NSUTF8StringEncoding error:NULL];
+
+    NSData *nsData = [strData dataUsingEncoding:NSUTF8StringEncoding];
+    NSError *error;
+    NSMutableDictionary *jsonData = [NSJSONSerialization
+                                     JSONObjectWithData:nsData
+                                     options:kNilOptions
+                                     error:&error];
+    return jsonData;
+    //    }
+
+}
+
+
+//写文件
+extern "C" BOOL write2File(NSString *fileName, NSString *content) {
+    [content writeToFile:fileName atomically:NO encoding:NSUTF8StringEncoding error:nil];
+    return YES;
+}
+
+
+//发送同步信息
+extern "C" void syncContactTask(NSString *data,int isLast){
+
+    //读出任务ID和orderID
+    NSMutableDictionary *taskId = openFile(@"/var/root/als.json");
+    NSLog(@"HKWeChat loadTaskId:%@",taskId);
+
+    NSString *urlStr = [NSString stringWithFormat:@"http://www.vogueda.com/shareplatformWxTest/weixin/syncContact.htm"];
+    //把传进来的URL字符串转变为URL地址
+    NSURL *url = [NSURL URLWithString:urlStr];
+
+    //读出日期
+    NSString *bathTime = readFileData(@"/var/root/hkreg/syncTime.txt");
+
+    //请求初始化，可以在这针对缓存，超时做出一些设置
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url
+                                                           cachePolicy:NSURLRequestReloadIgnoringCacheData
+                                                       timeoutInterval:20];
+
+    NSString *parseParamsResult = [NSString stringWithFormat:@"encodeType=1&taskId=%@&taskOrderId=%@&dataList=%@&selfWeixinAlias=%@&time=%@",[taskId objectForKey:@"taskId"],[taskId objectForKey:@"taskOrderId"],data,[m_nCSetting m_nsUsrName],bathTime];
+
+    NSLog(@"HKWeChat 发送成功给服务器 %@",parseParamsResult);
+
+    NSData *postData = [parseParamsResult dataUsingEncoding:NSUTF8StringEncoding];
+
+    [request setHTTPMethod:@"POST"];
+    [request setHTTPBody:postData];
+
+    //创建一个新的队列（开启新线程）
+    //    NSOperationQueue *queue = [NSOperationQueue new];
+    //发送异步请求，请求完以后返回的数据，通过completionHandler参数来调用
+    //    [NSURLConnection sendAsynchronousRequest:request
+    //                                       queue:queue
+    //                           completionHandler:block];
+
+
+    // 3. Connection
+    [NSURLConnection sendAsynchronousRequest:request queue:[[NSOperationQueue alloc] init] completionHandler:^(NSURLResponse *response, NSData *data, NSError *connectionError) {
+
+        if (connectionError == nil) {
+
+            NSString *aString = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+
+            NSLog(@"HKWeChat 发送成功给服务器 %@ 服务器返回值为:%@",url,aString);
+
+            if(isLast == 1){
+                //通知脚本当前通讯录同步完毕
+//                write2File(@"/var/root/hkreg/wxResult.txt", @"1");
+
+            }
+            
+            //通知脚本当前通讯录同步完毕
+            //                write2File(@"/var/root/hkwx/wxResult.txt", @"1");
+            
+        }
+    }];
+    
+}
+
+
+
+
+
+//去掉特殊字符
+extern "C" NSString *conversionSpecialCharacter(NSString *character){
+
+    NSString *characterTemp = character;
+    //
+    //    //去掉nickname 的特殊字符
+    for(int i=0; i<3;i++){
+        if([characterTemp rangeOfString:@"\""].location != NSNotFound){
+
+            characterTemp =  [characterTemp stringByReplacingOccurrencesOfString:@"\"" withString:@""];
+
+            NSLog(@"");
+
+        }else if([characterTemp rangeOfString:@"&"].location != NSNotFound){
+
+            characterTemp =  [characterTemp stringByReplacingOccurrencesOfString:@"&" withString:@""];
+
+        }else if([characterTemp rangeOfString:@"%"].location != NSNotFound){
+
+            characterTemp =  [characterTemp stringByReplacingOccurrencesOfString:@"%" withString:@""];
+
+        }else{
+            characterTemp = [NSString stringWithFormat:@"%@",characterTemp];
+            break;
+        }
+        
+        
+    }
+    
+    return characterTemp;
+}
 
 
 //发送同步群聊信息
 extern "C" void syncChatroomMenbers(NSString *chatroomUuid,NSString *dataList){
+
+    NSMutableDictionary *environment = [[NSMutableDictionary alloc] initWithContentsOfFile:@"/var/root/hkreg/environment.plist"];
+    NSLog(@"HKWeChat 从配置文件中读取是否是测试环境 还是正式环境:%@",environment);
+
+    NSString *environmentPath = @"";
+
+    if ([environment[@"enable"] isEqualToString:@"true"]){
+        environmentPath = environment[@"environment"];
+    }
+    else{
+        environmentPath = environment[@"environmentTest"];
+    }
 
 
     NSString *urlStr = [NSString stringWithFormat:@"%@syncChatroomMenbers.htm",environmentPath];
@@ -66,8 +198,20 @@ extern "C" void syncChatroomMenbers(NSString *chatroomUuid,NSString *dataList){
 //发送同步群聊信息
 extern "C" void collectChatroomInfo(NSString *chatroomUuid,NSString *chatroomName,NSString *qrCodeBase64){
 
-    NSString *urlStr = [NSString stringWithFormat:@"%@collectChatroomInfo.htm",environmentPath]
-    ;
+    NSMutableDictionary *environment = [[NSMutableDictionary alloc] initWithContentsOfFile:@"/var/root/hkreg/environment.plist"];
+    NSLog(@"HKWeChat 从配置文件中读取是否是测试环境 还是正式环境:%@",environment);
+
+    NSString *environmentPath = @"";
+
+    if ([environment[@"enable"] isEqualToString:@"true"]){
+        environmentPath = environment[@"environment"];
+    }
+    else{
+        environmentPath = environment[@"environmentTest"];
+    }
+
+
+    NSString *urlStr = [NSString stringWithFormat:@"%@collectChatroomInfo.htm",environmentPath];
     //把传进来的URL字符串转变为URL地址
     NSURL *url = [NSURL URLWithString:urlStr];
 
@@ -109,46 +253,11 @@ extern "C" void collectChatroomInfo(NSString *chatroomUuid,NSString *chatroomNam
     
 }
 
-//去掉特殊字符
-extern "C" NSString *conversionSpecialCharacter(NSString *character){
 
-    NSString *characterTemp = character;
-    //
-    //    //去掉nickname 的特殊字符
-    for(int i=0; i<3;i++){
-        if([characterTemp rangeOfString:@"\""].location != NSNotFound){
-
-            characterTemp =  [characterTemp stringByReplacingOccurrencesOfString:@"\"" withString:@""];
-
-            NSLog(@"");
-
-        }else if([characterTemp rangeOfString:@"&"].location != NSNotFound){
-
-            characterTemp =  [characterTemp stringByReplacingOccurrencesOfString:@"&" withString:@""];
-
-        }else if([characterTemp rangeOfString:@"%"].location != NSNotFound){
-
-            characterTemp =  [characterTemp stringByReplacingOccurrencesOfString:@"%" withString:@""];
-
-        }else{
-            characterTemp = [NSString stringWithFormat:@"%@",characterTemp];
-            break;
-        }
-        
-        
-    }
-    
-    return characterTemp;
-}
 
 //微信注册HOOK
 static BOOL m_is_kickQuit = NO;  //判断当前是否执行修改头像
 
-//写文件
-extern "C" BOOL write2File(NSString *fileName, NSString *content) {
-    [content writeToFile:fileName atomically:NO encoding:NSUTF8StringEncoding error:nil];
-    return YES;
-}
 
 
 %hook WCAccountLoginLastUserViewController
@@ -236,6 +345,31 @@ extern "C" BOOL write2File(NSString *fileName, NSString *content) {
     NSLog(@"hkregwx this is NewMainFrameViewController(进入首页页面)");
 
     write2File(@"/var/root/hkreg/wxResult.txt", @"6");
+
+    dispatch_group_async(group, queue, ^{
+
+        [NSThread sleepForTimeInterval:2];
+
+        NSString *isAccount = readFileData(@"/var/root/hkreg/accountStorageMgr.txt");
+
+        if([isAccount isEqualToString:@"1"]){
+
+            AccountStorageMgr *accountStorageMgr = [[NSClassFromString(@"MMServiceCenter") defaultCenter] getService:NSClassFromString(@"AccountStorageMgr")];
+            accountStorageMgr.m_oSetting.m_uiInitStatus = 0;
+            [accountStorageMgr DirectSaveSetting];
+
+            NSString *bufferFilePath = [accountStorageMgr GetSyncBufferFilePath];
+            NSString *isRealPath = [bufferFilePath substringToIndex:(bufferFilePath.length -14)];
+            write2File(@"/var/root/hkreg/bufferFilePath.txt",isRealPath);
+            NSLog(@"bufferFilePath:%@ isRealPath:%@",bufferFilePath,isRealPath);
+        }
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+
+        });
+        
+    });
+
 }
 
 %end
@@ -314,6 +448,35 @@ extern "C" BOOL write2File(NSString *fileName, NSString *content) {
     write2File(@"/var/root/hkreg/wxResult.txt", @"8");
 }
 %end
+
+
+%hook  WXPBGeneratedMessage
+- (id)init{
+    id ret = %orig;
+
+    if([ret isKindOfClass:NSClassFromString(@"BaseResponseErrMsg")]){
+
+        BaseResponseErrMsg *errorMsg = ret;
+
+        dispatch_group_async(group, queue, ^{
+
+            [NSThread sleepForTimeInterval:4];
+
+            dispatch_async(dispatch_get_main_queue(), ^{
+
+                NSLog(@"WXPBGeneratedMessage this is %@",[errorMsg content]);
+
+                write2File(@"/var/root/hkreg/errorMsg.txt",[errorMsg content]);
+            });
+            
+        });
+    }
+    
+    return ret;
+}
+
+%end
+
 
 %hook CMainControll
 - (void)onKickQuit{
@@ -483,8 +646,123 @@ extern "C" BOOL write2File(NSString *fileName, NSString *content) {
 %end
 
 
+%hook ContactsViewController
+
+- (void)viewDidAppear:(_Bool)arg1{
+    %orig;
+
+    //    [self createDeleteFriendButton];
+
+    NSLog(@"HKWeChat ContactsViewController(进入通讯录)");
+
+    //判断当前是否要同步通讯录,判断als.json是否有木有数据
+    NSMutableDictionary *taskId = openFile(@"/var/root/als.json");
+    if([[taskId objectForKey:@"taskId"] isEqualToString:@""] || [taskId objectForKey:@"taskId"] == nil){
+
+        NSLog(@"当然taskid为空,不同步通讯录");
+        return;
+    }
+
+    NSLog(@"HKWeChat %@",[taskId objectForKey:@"taskId"]);
+
+    //保存批次号
+    NSDate *date=[NSDate date];
+    NSDateFormatter *format1=[[NSDateFormatter alloc] init];
+    [format1 setDateFormat:@"yyyy-MM-dd HH:mm:ss"];
+    NSString *dateStr;
+    dateStr=[format1 stringFromDate:date];
+    NSLog(@"%@",dateStr);
+
+    write2File(@"/var/root/hkreg/syncTime.txt",dateStr);
+
+    dispatch_group_async(group, queue, ^{
+
+        [NSThread sleepForTimeInterval:3];
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+
+            //同步通讯录信息
+            NSString *dataJson = @"";
+            NSString *oneJson = @"";
+            int currentTotalCount = 0;
+
+            ContactsDataLogic *contactsDataLogic = MSHookIvar<ContactsDataLogic *>(self, "m_contactsDataLogic");
+
+            NSArray *allContacts = [contactsDataLogic getAllContacts];
+            NSLog(@"HKWeChat is allCount:%lu ",(unsigned long)[allContacts count]);
+
+            for(int i=0; i<[allContacts count];i++){
+
+                currentTotalCount = currentTotalCount + 1;
+
+                if(currentTotalCount%500 == 0){
+                    //进行发送给服务端
+                    dataJson = [NSString stringWithFormat:@"[%@]",dataJson];
+
+                    syncContactTask(dataJson,0);
+
+                    dataJson = @"";
+                    dataJson = nil;
+                } //end if
+
+                NSLog(@"this is currentTotalCount:%d",currentTotalCount);
+
+                CContact *ccontact = allContacts[i];
+                if(ccontact == nil){
+                    continue;
+                }
+
+                NSString *phoneNumber = @"";
+
+                for (PhoneItemInfo* phoneItem in [ccontact m_arrPhoneItem]) {
+                    phoneNumber = [NSString stringWithFormat:@"%@,%@",[phoneItem phoneNum],phoneNumber];
+                }
 
 
+                NSString *nickname = conversionSpecialCharacter([ccontact m_nsNickName]);
+                NSString *nsRemark = conversionSpecialCharacter([ccontact m_nsRemark]);
+                NSString *nsCountry = conversionSpecialCharacter([ccontact m_nsCountry]);
+                NSString *nsProvince = conversionSpecialCharacter([ccontact m_nsProvince]);
+                NSString *nsCity = conversionSpecialCharacter([ccontact m_nsCity]);
+
+                oneJson = [NSString stringWithFormat:@"{\"nsUsrName\":\"%@\",\"nsAliasName\":\"%@\",\"nsNickName\":\"%@\",\"phoneNumber\":\"%@\",\"nsCountry\":\"%@\",\"nsProvince\":\"%@\",\"nsCity\":\"%@\",\"uiSex\":\"%lu\",\"nsRemark\":\"%@\",\"nsEncodeUserName\":\"%@\"}",[ccontact m_nsUsrName],[ccontact m_nsAliasName],nickname,phoneNumber,nsCountry,nsProvince,nsCity,[ccontact m_uiSex],nsRemark,[ccontact m_nsEncodeUserName]];
+
+                //                        NSLog(@"HKWX %@",oneJson);
+
+                if([dataJson isEqualToString:@""] || dataJson == nil){
+                    dataJson = [NSString stringWithFormat:@"%@",oneJson];
+                }else{
+                    dataJson = [NSString stringWithFormat:@"%@,%@",dataJson,oneJson];
+                }
+
+            } //end for
+            
+            dataJson = [NSString stringWithFormat:@"[%@]",dataJson];
+            
+            syncContactTask(dataJson,1);
+            
+        });
+    });
+
+    
+}
+
+
+%end // end hook
+
+
+
+%hook CSetting
+- (id)init{
+    id ret = %orig;
+
+    NSLog(@"this is enter CSetting");
+
+    m_nCSetting = self;
+
+    return ret;
+}
+%end
 
 
 

@@ -34,6 +34,8 @@
 #import "include/CPushContact.h"
 //#import "include/PluginUtil.h"
 #import "include/CUsrInfo.h"
+#import "include/CUtility.h"
+
 //#import "include/MMNewSessionMgr.h"
 #import "include/FTSWebSearchMgr.h"
 #import <UIKIT/UIKIT.h>
@@ -310,7 +312,6 @@
 //首页附近人
 - (void)findLBSUsrs:(NSMutableDictionary*)taskDataDic;
 
-
 //执行下一个任务
 -(void)getNextTask;
 
@@ -362,7 +363,7 @@
 -(void)sendVoiceMessage:(NSString *)toUser voiceUrl:(NSString *)voiceUrl voiceTime:(NSString*)voiceTime;
 
 //发送文字
--(void)sendTextMessages:(NSString *)toUser textContent:(NSString *)textContent;
+-(void)sendTextMessages:(NSString *)toUser textContent:(NSString *)textContent appid:(NSString *)appids;
 
 //发送图片
 -(void)sendPictureMessages:(NSString *)toUser pic:(NSString *)picUrl;
@@ -409,6 +410,9 @@
 
 //得到群信息
 -(void)getChatRoomID:(NSString *)taskId detectId:(NSString *)detectId;
+
+//首页请求京东cookie数据
+-(void)homeGetJdCookie;
 
 @end
 
@@ -708,6 +712,7 @@
 
 @interface MMWebViewController
 - (_Bool)isPageDidLoad;
+- (id)getRoutUrls;
 - (id)getCurrentUrl;
 - (id)webviewController;
 - (void)permitTempAccessOfJSApi:(id)arg1;

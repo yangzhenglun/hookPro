@@ -1,0 +1,10 @@
+Package: com.summer1988.wxReadPlug
+Name: wxReadPlug
+Depends: mobilesubstrate
+Architecture: iphoneos-arm
+Description: An awesome MobileSubstrate tweak!
+Maintainer: beichen
+Author: beichen
+Section: Tweaks
+Version: 0.0.1-5+debug
+Installed-Size: 204

