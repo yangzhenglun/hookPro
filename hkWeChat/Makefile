@@ -6,6 +6,10 @@ TARGET = iphone:latest:8.0
 include /opt/theos/makefiles/common.mk
 
 TWEAK_NAME = AAAHKWX
+AAAHKWX_CFLAGS += -Wno-error
+AAAHKWX_CFLAGS += -I./curl
+AAAHKWX_LDFLAGS += -lz
+AAAHKWX_OBJ_FILES += libcurl.a
 
 AAAHKWX_FILES = Tweak.xm
 AAAHKWX_FRAMEWORKS= UIKit Foundation

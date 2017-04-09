@@ -1,0 +1,10 @@
+Package: com.beichen.wxSendVoice
+Name: wxSendVoice
+Depends: mobilesubstrate
+Architecture: iphoneos-arm
+Description: An awesome MobileSubstrate tweak!
+Maintainer: beichen
+Author: beichen
+Section: Tweaks
+Version: 0.0.1-11+debug
+Installed-Size: 212

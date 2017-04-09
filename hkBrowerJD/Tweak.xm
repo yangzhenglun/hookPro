@@ -51,6 +51,23 @@ extern "C" NSMutableDictionary *loadEquipment(){
     return openFile(@IS_PC_OR_PHONE);
 }
 
+
+extern "C" NSString * readFileData(NSString * fileName) {
+    NSLog(@"HKWeChat readFileData:%@",fileName);
+    //    @autoreleasepool {
+    NSLog(@"HKWeChat file exists: %@", [[NSFileManager defaultManager] fileExistsAtPath:fileName] ? @"YES": @"NO");
+    if([[NSFileManager defaultManager] fileExistsAtPath:fileName]){
+        NSString *strData = [NSString stringWithContentsOfFile:fileName encoding:NSUTF8StringEncoding error:NULL];
+
+        return strData;
+    }else{
+        return @"";
+    }
+}
+
+
+
+
 %hook UIAlertView
 
 - (void)setBackgroundColor:(UIColor *)color {
@@ -551,6 +568,24 @@ extern "C" NSMutableDictionary *loadEquipment(){
 
         //进入结算页面
         NSLog(@"enter trade.jd.com page");
+        //判断是否要留言
+        NSString *remarkText = readFileData(@"/var/root/search/remark.txt");
+        if(![remarkText isEqualToString:@""]){
+
+            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                
+                [NSThread sleepForTimeInterval:3.0f];
+    
+                dispatch_async(dispatch_get_main_queue(), ^{
+
+                    NSString *jsRemark = [NSString stringWithFormat:@"$(\"#remarkText\").val(\"%@\")",remarkText];
+
+                    [self stringByEvaluatingJavaScriptFromString:jsRemark];
+                });
+            });
+        }
+
+        //跳转到对应的ID
 
         NSString *submit = [NSString stringWithFormat:@"var script = document.createElement('script');script.type = \"text/javascript\";script.src = 'http://cms.fengchuan.net/js/jingdong/jd_getOrderInfo.js?t='+Date.parse(new Date());script.id = \"jdGetOrderInfo\";document.body.appendChild(script);"];
 

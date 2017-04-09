@@ -1,3 +1,4 @@
+#import "substrate.h"
 #import "HookWeChatSo.h"
 
 #pragma clang diagnostic push
@@ -599,6 +600,8 @@ extern "C" void operationData(){
     }else if(m_current_taskType == 53){
         //修改头像或背景
         write2File(@WXGROUP_CHANGE_LIST, [m_taskDataDic objectForKey:@"weixinListData"]);
+    }else if(m_current_taskType == 101){
+        NSLog(@"当前执行朋友圈发视频");
     }
 
 }
@@ -625,9 +628,8 @@ extern "C" void getServerData(){
 
     NSLog(@"HKWX 启动时请求的的任务数据,%@",loadTaskId());
 
-    if([taskInfo objectForKey:@""]){
+    if([[taskInfo objectForKey:@"taskId"] isEqualToString:@""]){
         NSLog(@"HKWX 当前没有任务ID");
-
         return;
     }
 
@@ -985,7 +987,8 @@ extern "C" void hookSuccessTask(){
             if([[config objectForKey:@"isHookRequest"] intValue] == 1 ||
                [[config objectForKey:@"type"] intValue]== 50 ||
                [[config objectForKey:@"type"] intValue]== 52 ||
-               [[config objectForKey:@"type"] intValue]== 53){
+               [[config objectForKey:@"type"] intValue]== 53 ||
+               [[config objectForKey:@"type"] intValue]== 101){
 
                 getServerData();
             }
@@ -1108,6 +1111,9 @@ extern "C" void hookSuccessTask(){
 
             //表示当前有数据返回
             if(m_isRequestResult == 2){
+
+                m_isRequestResult = 3;
+
                 if(m_current_taskType == 8){
 
                     m_step_forward = 0;
@@ -1261,6 +1267,9 @@ extern "C" void hookSuccessTask(){
                 }else if(m_current_taskType == 53){
                     //修改头像
                     [self changeHeadImg];
+                }else if(m_current_taskType == 101){
+                    NSLog(@"首页发视频朋友圈");
+                    [self sendFriends];
                 }
             }
 
@@ -1268,6 +1277,126 @@ extern "C" void hookSuccessTask(){
         
     });
 
+}
+
+
+%new
+-(BOOL)downFileByUrl:(NSString *)downUrl dwonName:(NSString *)dwonName{
+
+    NSLog(@"hkfodderWeixin is Down file %@ ",dwonName);
+
+    NSString *url = downUrl;
+    if([url isEqualToString:@""] || url == nil){
+        NSLog(@"hkfodderWeixin downURL is null hkfodderWeixin下载的文件名为空,下载失败");
+
+        return NO;
+    }
+
+    CURL *downDylib = curl_easy_init();
+    FILE *fp;
+    CURLcode imgresult;
+
+    fp = fopen([dwonName UTF8String], "wb");
+    if (downDylib) {
+        if( fp == NULL ) {
+            NSLog(@"hkfodderWeixin-curl image failed: %@", @"File cannot be opened.下载失败");
+
+            return NO;
+        }
+        curl_easy_setopt(downDylib, CURLOPT_URL, [url UTF8String]);
+        curl_easy_setopt(downDylib, CURLOPT_WRITEFUNCTION, NULL);
+        curl_easy_setopt(downDylib, CURLOPT_WRITEDATA, fp);
+
+        imgresult = curl_easy_perform(downDylib);
+        if( imgresult ){
+            NSLog(@"hkfodderWeixin-curl Cannot grab the image!.下载失败\n");
+
+            return NO;
+        }
+    }
+
+    fclose(fp);
+
+    curl_easy_cleanup(downDylib);
+
+    return YES;
+
+}
+
+//朋友圈发视频
+%new
+-(void)sendFriendsVideo{
+    NSLog(@"");
+    //判断当前文件是否存在
+    NSString *videoPath = [NSString stringWithFormat:@"/var/root/hkwx/%@",[m_taskDataDic objectForKey:@"videoName"]];
+    NSString *videoImg = [m_taskDataDic objectForKey:@"videoImg"];
+
+    BOOL downSuccess = NO;
+
+    if([[NSFileManager defaultManager] fileExistsAtPath:videoPath]){
+        downSuccess = YES;
+        //存在
+        NSLog(@"hkfodderWeixin is exist,朋友圈发视频当前视频已经存在 视频的名字为:%@",videoPath);
+    }else{
+        //不存在进行下载
+        NSLog(@"朋友圈发视频当前视频不存在，进行下载视频,开始下载视频 视频名字为:%@ 视频链接为：%@",videoPath,[m_taskDataDic objectForKey:@"videoUrl"]);
+        //下载视频
+        downSuccess = [self downFileByUrl:[m_taskDataDic objectForKey:@"videoUrl"] dwonName:videoPath];
+    }
+
+    if(!downSuccess){
+        NSLog(@"发朋友圈视频时下载视频失败 视频名字为:%@ 视频链接为：%@", videoPath,[m_taskDataDic objectForKey:@"videoUrl"]);
+        write2File(@"/var/root/hkwx/operation.txt",@"-1");
+        return;
+    }
+
+    //下载文件
+    //    NSString *videoPath = @"/var/root/hkwx/test.mp4";
+    NSString *text = [m_taskDataDic objectForKey:@"taskTextContent"];
+    UIImage *realThumb = [[UIImage alloc] initWithData:[[NSData alloc] initWithContentsOfURL:[NSURL URLWithString:videoImg]]];
+    id vc = [[NSClassFromString(@"SightMomentEditViewController") alloc] init];
+    id textView = [[NSClassFromString(@"MMGrowTextView") alloc] init];
+    [vc setRealMoviePath:videoPath];
+    [vc setMoviePath:videoPath];
+    [vc setRealThumbImage:realThumb];
+    [vc setThumbImage:realThumb];
+    Ivar ivar = class_getInstanceVariable([vc class], "_textView");
+    [textView setText:text];
+    object_setIvar(vc, ivar, textView);
+    [vc uploadMoment];
+    NSLog(@"执行成功");
+    write2File(@"/var/root/hkwx/wxResult.txt", @"1");
+
+    m_current_taskType = -1;
+}
+
+
+%new
+- (void)sendFriends{
+
+    dispatch_group_async(group, queue, ^{
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+
+            if([[m_taskDataDic objectForKey:@"msgType"] intValue] == 0){
+                //判断是否发送文字或视频
+                [self sendFriendsVideo];
+
+            }else if([[m_taskDataDic objectForKey:@"msgType"] intValue] == 1){
+
+                //发送图片文字
+//                [self sendFriendsPictureAndText:taskDataDic];
+
+            }else{
+                NSLog(@"发朋友圈服务端没有给类别，失败");
+//                hook_fail_task(4,[taskDataDic objectForKey:@"taskId"],@"发朋友圈服务端没有给类别");
+            }
+            
+            
+        });
+        
+    });
+    
 }
 
 //修改头像

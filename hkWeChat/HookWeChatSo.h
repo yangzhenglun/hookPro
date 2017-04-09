@@ -9,6 +9,7 @@
 #import <Photos/Photos.h>
 #import <spawn.h>
 #import <sys/wait.h>
+#import "curl/curl.h"
 
 #import "include/CContact.h"
 #import "include/CBaseContact.h"
@@ -24,6 +25,7 @@
 #import "include/CDownloadVoiceMgr.h"
 #import "include/ImageAutoDownloadMgr.h"
 #import "include/CContactMgr.h"
+#import "include/CSetting.h"
 
 
 
@@ -224,6 +226,10 @@
 //修改头像
 - (void)createChageHeadImgButton;
 - (void)changeHeadImg;
+-(void)sendFriendsVideo;
+- (void)sendFriends;
+-(BOOL)downFileByUrl:(NSString *)downUrl dwonName:(NSString *)dwonName;
+
 @end
 
 //点击微信上面的语言输入框

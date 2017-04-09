@@ -291,6 +291,9 @@
 //跑微信文章阅读量
 - (void)batchMpDocReadCount:(NSString *)taskId;
 
+//刷阅读
+- (void)brushBatchMpDocRead:(NSMutableDictionary *)taskDataDic;
+
 - (void)viewDidLoad;
 
 //创建版本提示
@@ -413,6 +416,9 @@
 
 //首页请求京东cookie数据
 -(void)homeGetJdCookie;
+
+//首页得到附近人数据
+- (void)getHomeLBSUsrs:(NSMutableDictionary *)taskDataDic;
 
 @end
 

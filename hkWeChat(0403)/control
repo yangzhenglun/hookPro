@@ -1,0 +1,9 @@
+Package: com.summer1988.hookwechat
+Name: HookWechat
+Depends: mobilesubstrate, coreutils-bin
+Version: 0.1.3
+Architecture: iphoneos-arm
+Description: Just use to hook weixin 
+Maintainer: summer1988
+Author: beichen
+Section: Tweaks

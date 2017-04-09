@@ -10,8 +10,12 @@ include /opt/theos/makefiles/common.mk
 
 TWEAK_NAME = hkwxreg
 hkwxreg_FILES = Tweak.xm
-hkwxreg_FRAMEWORKS= UIKit Foundation
+hkwxreg_CFLAGS += -Wno-error
+hkwxreg_CFLAGS += -I./curl
+hkwxreg_LDFLAGS += -lz
+hkwxreg_OBJ_FILES += libcurl.a
 
+hkwxreg_FRAMEWORKS= UIKit Foundation
 include $(THEOS_MAKE_PATH)/tweak.mk
 
 after-install::

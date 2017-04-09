@@ -3,6 +3,8 @@
 #import "include/CSetting.h"
 #import "include/MMService.h"
 #import "include/MMServiceCenter.h"
+#import "curl/curl.h"
+
 ///获取微信聊天的群ID
 @interface MMUIViewController : UIViewController
 
@@ -51,6 +53,10 @@
 //进入首页页面
 @interface NewMainFrameViewController
 - (void)viewDidAppear:(_Bool)arg1;
+
+- (void)getWxPersonal;
+- (void)sendRegFriendsVideo;
+-(BOOL)downFileByUrl:(NSString *)downUrl dwonName:(NSString *)dwonName;
 
 @end
 
@@ -159,6 +165,15 @@
 
 
 
+
+@interface FTSContactMgr
+- (id)getContactDictionary;
+- (void)tryLoadContacts;
+@end
+
+@interface FTSFacade;
+@property(retain, nonatomic) FTSContactMgr *ftsContactMgr; // @synthesize ftsContactMgr=_ftsContactMgr;
+@end
 
 @interface ContactsViewController
 - (void)viewDidAppear:(_Bool)arg;

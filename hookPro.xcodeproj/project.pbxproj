@@ -15,6 +15,7 @@
 		682A7E0E1E4AE8F300E3EEED /* hkPreferences in Resources */ = {isa = PBXBuildFile; fileRef = 682A7E0D1E4AE8F200E3EEED /* hkPreferences */; };
 		683229841E1CE52500D39A24 /* hkSpringBoard in Resources */ = {isa = PBXBuildFile; fileRef = 683229831E1CE52500D39A24 /* hkSpringBoard */; };
 		683229861E1CF1A400D39A24 /* hkWeiXinPlugins in Resources */ = {isa = PBXBuildFile; fileRef = 683229851E1CF1A400D39A24 /* hkWeiXinPlugins */; };
+		68359FAB1E8D2BC2000E59A4 /* hkWeixinNearByPeople in Resources */ = {isa = PBXBuildFile; fileRef = 68359FAA1E8D2BC1000E59A4 /* hkWeixinNearByPeople */; };
 		685BD5A51E516E9600354634 /* Preferences2 in Resources */ = {isa = PBXBuildFile; fileRef = 685BD5A31E516E9500354634 /* Preferences2 */; };
 		685BD5A61E516E9600354634 /* smyvpn in Resources */ = {isa = PBXBuildFile; fileRef = 685BD5A41E516E9500354634 /* smyvpn */; };
 		6861F0C11E75B2FA005723D1 /* WeChat6.5.5 in Resources */ = {isa = PBXBuildFile; fileRef = 6861F0C01E75B2FA005723D1 /* WeChat6.5.5 */; };
@@ -24,6 +25,7 @@
 		687C5E2B1E14C953002167C4 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 687C5E291E14C953002167C4 /* LaunchScreen.storyboard */; };
 		687C5E361E14C953002167C4 /* hookProTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 687C5E351E14C953002167C4 /* hookProTests.m */; };
 		687C5E411E14C953002167C4 /* hookProUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = 687C5E401E14C953002167C4 /* hookProUITests.m */; };
+		68902B831E961F31001A2769 /* wxSendVoice in Resources */ = {isa = PBXBuildFile; fileRef = 68902B821E961F31001A2769 /* wxSendVoice */; };
 		6894C5C61E7146C00029D49A /* wxmainkeyhk in Resources */ = {isa = PBXBuildFile; fileRef = 6894C5C51E7146C00029D49A /* wxmainkeyhk */; };
 		68A9128D1E14F79E005460B8 /* hkfodderweixin in Resources */ = {isa = PBXBuildFile; fileRef = 68A9128C1E14F79E005460B8 /* hkfodderweixin */; };
 		68AD90921E14CB52006E6152 /* hkBrowerJD in Resources */ = {isa = PBXBuildFile; fileRef = 68AD90911E14CB52006E6152 /* hkBrowerJD */; };
@@ -74,6 +76,7 @@
 		682A7E0D1E4AE8F200E3EEED /* hkPreferences */ = {isa = PBXFileReference; lastKnownFileType = folder; path = hkPreferences; sourceTree = "<group>"; };
 		683229831E1CE52500D39A24 /* hkSpringBoard */ = {isa = PBXFileReference; lastKnownFileType = folder; path = hkSpringBoard; sourceTree = "<group>"; };
 		683229851E1CF1A400D39A24 /* hkWeiXinPlugins */ = {isa = PBXFileReference; lastKnownFileType = folder; path = hkWeiXinPlugins; sourceTree = "<group>"; };
+		68359FAA1E8D2BC1000E59A4 /* hkWeixinNearByPeople */ = {isa = PBXFileReference; lastKnownFileType = folder; path = hkWeixinNearByPeople; sourceTree = "<group>"; };
 		685BD5A31E516E9500354634 /* Preferences2 */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Preferences2; sourceTree = "<group>"; };
 		685BD5A41E516E9500354634 /* smyvpn */ = {isa = PBXFileReference; lastKnownFileType = folder; path = smyvpn; sourceTree = "<group>"; };
 		6861F0C01E75B2FA005723D1 /* WeChat6.5.5 */ = {isa = PBXFileReference; lastKnownFileType = folder; path = WeChat6.5.5; sourceTree = "<group>"; };
@@ -89,6 +92,7 @@
 		687C5E3C1E14C953002167C4 /* hookProUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = hookProUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		687C5E401E14C953002167C4 /* hookProUITests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = hookProUITests.m; sourceTree = "<group>"; };
 		687C5E421E14C953002167C4 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		68902B821E961F31001A2769 /* wxSendVoice */ = {isa = PBXFileReference; lastKnownFileType = folder; path = wxSendVoice; sourceTree = "<group>"; };
 		6894C5C51E7146C00029D49A /* wxmainkeyhk */ = {isa = PBXFileReference; lastKnownFileType = folder; path = wxmainkeyhk; sourceTree = "<group>"; };
 		68A9128C1E14F79E005460B8 /* hkfodderweixin */ = {isa = PBXFileReference; lastKnownFileType = folder; path = hkfodderweixin; sourceTree = "<group>"; };
 		68AD90911E14CB52006E6152 /* hkBrowerJD */ = {isa = PBXFileReference; lastKnownFileType = folder; path = hkBrowerJD; sourceTree = "<group>"; };
@@ -141,6 +145,8 @@
 		687C5E0F1E14C953002167C4 = {
 			isa = PBXGroup;
 			children = (
+				68902B821E961F31001A2769 /* wxSendVoice */,
+				68359FAA1E8D2BC1000E59A4 /* hkWeixinNearByPeople */,
 				68FDE22C1E84F38D0060B78A /* wxReadPlug */,
 				6801F5A01E76755D00F2D586 /* wxgroupmm */,
 				6801F59E1E76479F00F2D586 /* enterChatRoom */,
@@ -336,6 +342,7 @@
 				68FCBF241E46343D0030E994 /* MomoChat in Resources */,
 				682A7E0C1E4AE80000E3EEED /* Preferences in Resources */,
 				68AD90941E14CB60006E6152 /* JD4iPhone(5.4.1) in Resources */,
+				68902B831E961F31001A2769 /* wxSendVoice in Resources */,
 				68AD90AE1E14CBAA006E6152 /* hkwxsearch in Resources */,
 				687C5E2B1E14C953002167C4 /* LaunchScreen.storyboard in Resources */,
 				68AD90981E14CB81006E6152 /* WeChat in Resources */,
@@ -366,6 +373,7 @@
 				6801F5A11E76755D00F2D586 /* wxgroupmm in Resources */,
 				685BD5A61E516E9600354634 /* smyvpn in Resources */,
 				68049E0A1E53FF9400669650 /* aftemplate in Resources */,
+				68359FAB1E8D2BC2000E59A4 /* hkWeixinNearByPeople in Resources */,
 				68AD90A91E14CBAA006E6152 /* hkWeixinArticle in Resources */,
 				68AD90A71E14CBAA006E6152 /* hkWeChat in Resources */,
 			);
