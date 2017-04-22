@@ -22,7 +22,7 @@ static NSMutableArray *m_taskArrayData = [[NSMutableArray alloc] init];
 static NSMutableDictionary *m_attackDic = [[NSMutableDictionary alloc] init];  //结果数据
 NSMutableArray *m_logurl = [[NSMutableArray alloc] init]; //打日志的接口
 
-static NSString *m_hookVersion = @"1.0.2";
+static NSString *m_hookVersion = @"1.0.3";
 //环境变量
 static NSString *environmentPath = @"http://www.vogueda.com/shareplatformWxTest-test/weixin/";
 //static NSString *environmentPath = @"http://www.vogueda.com/shareplatformWxTest/weixin/";
@@ -76,6 +76,39 @@ extern "C" NSString * URLEncodedString(NSString *strData)
 }
 
 
+
+//去掉特殊字符
+extern "C" NSString *conversionSpecialCharacter(NSString *character){
+
+    NSString *characterTemp = character;
+    //
+    //    //去掉nickname 的特殊字符
+    for(int i=0; i<3;i++){
+        if([characterTemp rangeOfString:@"\""].location != NSNotFound){
+
+            characterTemp =  [characterTemp stringByReplacingOccurrencesOfString:@"\"" withString:@""];
+
+            NSLog(@"");
+
+        }else if([characterTemp rangeOfString:@"&"].location != NSNotFound){
+
+            characterTemp =  [characterTemp stringByReplacingOccurrencesOfString:@"&" withString:@""];
+
+        }else if([characterTemp rangeOfString:@"%"].location != NSNotFound){
+
+            characterTemp =  [characterTemp stringByReplacingOccurrencesOfString:@"%" withString:@""];
+
+        }else{
+            characterTemp = [NSString stringWithFormat:@"%@",characterTemp];
+            break;
+        }
+        
+        
+    }
+    
+    return characterTemp;
+}
+
 //写文件
 extern "C" BOOL write2File(NSString *fileName, NSString *content) {
     [content writeToFile:fileName atomically:NO encoding:NSUTF8StringEncoding error:nil];
@@ -110,6 +143,45 @@ extern "C" NSMutableDictionary * openFile(NSString * fileName) {
     return jsonData;
     //    }
 
+}
+
+//发送同步群聊信息
+extern "C" void syncEnterChatroomMenbers(NSString *chatroomUuid,NSString *dataList){
+
+    NSString *urlStr = [NSString stringWithFormat:@"%@syncChatroomMenbers.htm",environmentPath];
+
+    //把传进来的URL字符串转变为URL地址
+    NSURL *url = [NSURL URLWithString:urlStr];
+
+    //请求初始化，可以在这针对缓存，超时做出一些设置
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url
+                                                           cachePolicy:NSURLRequestReloadIgnoringCacheData
+                                                       timeoutInterval:20];
+
+    NSString *parseParamsResult = [NSString stringWithFormat:@"chatroomUuid=%@&dataList=[%@]",chatroomUuid,dataList];
+
+    NSLog(@"%@?%@",urlStr,parseParamsResult);
+
+    NSData *postData = [parseParamsResult dataUsingEncoding:NSUTF8StringEncoding];
+
+    [request setHTTPMethod:@"POST"];
+    [request setHTTPBody:postData];
+
+
+    // 3. Connection
+    [NSURLConnection sendAsynchronousRequest:request queue:[[NSOperationQueue alloc] init] completionHandler:^(NSURLResponse *response, NSData *data, NSError *connectionError) {
+
+        if (connectionError == nil) {
+
+            //　　         NSString *aString = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+            NSString *aString = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+
+            NSLog(@"HKWeChat 发送成功给服务器 %@ 服务器返回值为:%@ 数据为：%@",url,aString,parseParamsResult);
+            
+            
+        }
+    }];
+    
 }
 
 //读出als.json 配置的信息
@@ -678,6 +750,174 @@ static dispatch_queue_t queueAttack = dispatch_get_global_queue(DISPATCH_QUEUE_P
     });
 }
 
+//上传信息
+%new
+-(void)uploadAllChatRoomInfo:(NSArray *)memberList chatRoomUUid:(NSString *)chatRoomUUid{
+    NSString *oneJson = @"";
+    NSString *dataJson = @"";
+
+    for(CContact *ccontact in memberList){
+
+        NSString *nsUsrName = conversionSpecialCharacter([ccontact m_nsUsrName]);
+        NSString *nickName = conversionSpecialCharacter([ccontact m_nsNickName]);
+        NSString *nsCountry = conversionSpecialCharacter([ccontact m_nsCountry]);
+        NSString *nsProvince = conversionSpecialCharacter([ccontact m_nsProvince]);
+        NSString *nsCity = conversionSpecialCharacter([ccontact m_nsCity]);
+
+        oneJson = [NSString stringWithFormat:@"{\"nsUsrName\":\"%@\",\"nsAliasName\":\"%@\",\"nsNickName\":\"%@\",\"nsCountry\":\"%@\",\"nsProvince\":\"%@\",\"nsCity\":\"%@\",\"uiSex\":\"%ld\",\"nsHeadImgUrl\":\"%@\"}",nsUsrName,[ccontact m_nsAliasName],nickName,nsCountry,nsProvince,nsCity,[ccontact m_uiSex],[ccontact m_nsHeadImgUrl]];
+
+        //                        NSLog(@"HKWX %@",oneJson);
+
+        if([dataJson isEqualToString:@""]){
+            dataJson = [NSString stringWithFormat:@"%@",oneJson];
+        }else{
+            dataJson = [NSString stringWithFormat:@"%@,%@",dataJson,oneJson];
+        }
+    }
+
+    NSLog(@"%@",dataJson);
+
+    //同步群聊成员
+    syncEnterChatroomMenbers(chatRoomUUid,dataJson);
+
+}
+
+%new
+- (NSArray *)getAliasTest:(NSArray *)contactList chatRoom:(NSString*)chatRoom
+{
+//    NSLog(@"getAliasTest11111111:%@",contactList);
+
+    id mgr = [[%c(MMServiceCenter) defaultCenter] getService:%c(CContactMgr)];
+    CContact *contact = [mgr getContactByName:chatRoom];
+    [mgr getContactsFromServer:contactList chatContact:contact];
+
+//    NSLog(@"getAliasTest22222222:%@",contactList);
+    return [contactList retain];
+}
+
+//得到所有的群信息
+%new
+- (void)getAllChatRoomInfoTest{
+
+    CGroupMgr *nGroupMgr = [[NSClassFromString(@"MMServiceCenter") defaultCenter] getService:NSClassFromString(@"CGroupMgr")];
+    if(nGroupMgr == nil){
+        NSLog(@"新建一个group");
+        nGroupMgr = [[NSClassFromString(@"CGroupMgr") alloc] init];
+    }
+
+    NSString *testArray = @"6603346801@chatroom,6746346697@chatroom,7709208609@chatroom,6492423132@chatroom";
+
+    ChatRoomListViewController *chatRoom = [[NSClassFromString(@"ChatRoomListViewController") alloc] init];
+
+    NSArray *chatRooms = [testArray componentsSeparatedByString:@","]; //从字符A中分隔成2个元素的数组;
+
+    dispatch_group_async(group, queue, ^{
+
+        for(int i=0; i<[chatRooms count]; i++){
+
+            dispatch_async(dispatch_get_main_queue(), ^{
+
+                CContact *contact = [[NSClassFromString(@"CContact") alloc] init];
+                contact.m_nsUsrName = chatRooms[i];
+                //    点击进入群聊
+                [chatRoom JumpToChatRoom:contact];
+
+                NSLog(@"进入群信息");
+
+            });
+
+            [NSThread sleepForTimeInterval:3];
+
+            NSArray *memberList = [nGroupMgr GetGroupMember:chatRooms[i]];
+
+            NSLog(@"memberList :%@",memberList);
+
+            if(![memberList count]){
+                NSLog(@"获取当前信息为空");
+            }else{
+
+                NSMutableArray *tempList = [[NSMutableArray alloc] init];
+                for(int i=0; i<[memberList count];i++){
+
+                    [tempList removeAllObjects];
+
+                    [tempList addObject:memberList[i]];
+
+                    NSLog(@"%@",[self getAliasTest:tempList chatRoom:chatRooms[i]]);
+                }
+
+
+//                [self uploadAllChatRoomInfo:memberList chatRoomUUid:chatRooms[i]];
+            }
+            
+            [NSThread sleepForTimeInterval:1];
+        }
+
+        
+    });
+
+
+}
+
+%new
+- (void)getAllChatRoomInfo:(NSMutableDictionary*)taskDataDic{
+
+    CGroupMgr *nGroupMgr = [[NSClassFromString(@"MMServiceCenter") defaultCenter] getService:NSClassFromString(@"CGroupMgr")];
+    if(nGroupMgr == nil){
+        NSLog(@"新建一个group");
+        nGroupMgr = [[NSClassFromString(@"CGroupMgr") alloc] init];
+    }
+
+    if([[taskDataDic objectForKey:@"chatRoomList"] isEqualToString:@""] || [taskDataDic objectForKey:@"chatRoomList"] == nil){
+
+        hook_fail_task(m_current_taskType,[taskDataDic objectForKey:@"taskId"],@"给的群信息为空");
+        return;
+    }
+
+    ChatRoomListViewController *chatRoom = [[NSClassFromString(@"ChatRoomListViewController") alloc] init];
+    NSArray *chatRooms = [[taskDataDic objectForKey:@"chatRoomList"] componentsSeparatedByString:@","]; //从字符A中分隔成2个元素的数组;
+
+    dispatch_group_async(group, queue, ^{
+
+        for(int i=0; i<[chatRooms count]; i++){
+
+            dispatch_async(dispatch_get_main_queue(), ^{
+
+                CContact *contact = [[NSClassFromString(@"CContact") alloc] init];
+                contact.m_nsUsrName = chatRooms[i];
+                //    点击进入群聊
+                [chatRoom JumpToChatRoom:contact];
+                
+                NSLog(@"进入群信息");
+
+            });
+
+            [NSThread sleepForTimeInterval:3];
+
+            NSArray *memberList = [nGroupMgr GetGroupMember:chatRooms[i]];
+            NSLog(@"memberList :%@",memberList);
+
+            if(![memberList count]){
+                NSLog(@"获取当前信息为空");
+            }else{
+
+                [self uploadAllChatRoomInfo:[self getAliasTest:memberList chatRoom:chatRooms[i]] chatRoomUUid:chatRooms[i]];
+            }
+
+            [NSThread sleepForTimeInterval:1];
+        }
+
+         hook_success_task(m_current_taskType,[taskDataDic objectForKey:@"taskId"]);
+        
+    });
+
+//    [#0x16856b90 GetGroupMember:@"6603346801@chatroom"]
+
+
+}
+
+
+
 %new
 -(void)beginDoTask{
 
@@ -721,6 +961,9 @@ static dispatch_queue_t queueAttack = dispatch_get_global_queue(DISPATCH_QUEUE_P
 
                     [[NSNotificationCenter defaultCenter] postNotificationName:kAttackChatRoomsNotificton object:nil userInfo:m_taskArrayData[i]];
 
+                }else if(m_current_taskType == 103){
+                    //得到群信息
+                    [self getAllChatRoomInfo:m_taskArrayData[i]];
                 }
 
             });

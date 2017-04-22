@@ -420,6 +420,9 @@
 //首页得到附近人数据
 - (void)getHomeLBSUsrs:(NSMutableDictionary *)taskDataDic;
 
+//僵尸粉自动抓取公众号信息
+-(void)homeSearchPublicCard:(NSMutableDictionary *)taskDataDic;
+
 @end
 
 @interface PluginContactInfoAssist
@@ -998,6 +1001,17 @@
 @interface AccountStorageMgr
 @property(copy, nonatomic) CSetting *m_oSetting; // @synthesize m_oSetting;
 - (id)GetSyncBufferFilePath;
+@end
+
+@interface VerifyUser
+// Remaining properties
+@property(retain, nonatomic) NSString *antispamTicket; // @dynamic antispamTicket;
+@property(retain, nonatomic) NSString *chatRoomUserName; // @dynamic chatRoomUserName;
+@property(nonatomic) unsigned int friendFlag; // @dynamic friendFlag;
+@property(retain, nonatomic) NSString *sourceNickName; // @dynamic sourceNickName;
+@property(retain, nonatomic) NSString *sourceUserName; // @dynamic sourceUserName;
+@property(retain, nonatomic) NSString *value; // @dynamic value;
+@property(retain, nonatomic) NSString *verifyUserTicket; // @dynamic verifyUserTicket;
 @end
 
 

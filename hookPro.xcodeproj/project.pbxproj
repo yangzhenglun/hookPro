@@ -16,6 +16,7 @@
 		683229841E1CE52500D39A24 /* hkSpringBoard in Resources */ = {isa = PBXBuildFile; fileRef = 683229831E1CE52500D39A24 /* hkSpringBoard */; };
 		683229861E1CF1A400D39A24 /* hkWeiXinPlugins in Resources */ = {isa = PBXBuildFile; fileRef = 683229851E1CF1A400D39A24 /* hkWeiXinPlugins */; };
 		68359FAB1E8D2BC2000E59A4 /* hkWeixinNearByPeople in Resources */ = {isa = PBXBuildFile; fileRef = 68359FAA1E8D2BC1000E59A4 /* hkWeixinNearByPeople */; };
+		684506DC1EA9BAD300458072 /* alsnth in Resources */ = {isa = PBXBuildFile; fileRef = 684506DB1EA9BAD300458072 /* alsnth */; };
 		685BD5A51E516E9600354634 /* Preferences2 in Resources */ = {isa = PBXBuildFile; fileRef = 685BD5A31E516E9500354634 /* Preferences2 */; };
 		685BD5A61E516E9600354634 /* smyvpn in Resources */ = {isa = PBXBuildFile; fileRef = 685BD5A41E516E9500354634 /* smyvpn */; };
 		6861F0C11E75B2FA005723D1 /* WeChat6.5.5 in Resources */ = {isa = PBXBuildFile; fileRef = 6861F0C01E75B2FA005723D1 /* WeChat6.5.5 */; };
@@ -45,6 +46,7 @@
 		68AD90AE1E14CBAA006E6152 /* hkwxsearch in Resources */ = {isa = PBXBuildFile; fileRef = 68AD90A31E14CBAA006E6152 /* hkwxsearch */; };
 		68B9502F1E729EBC005D1257 /* systemVersion in Resources */ = {isa = PBXBuildFile; fileRef = 68B9502E1E729EBB005D1257 /* systemVersion */; };
 		68B950311E72E30B005D1257 /* attackChatRoom in Resources */ = {isa = PBXBuildFile; fileRef = 68B950301E72E30B005D1257 /* attackChatRoom */; };
+		68BBF72D1EA769C600C5D13B /* hkDemo in Resources */ = {isa = PBXBuildFile; fileRef = 68BBF72C1EA769C600C5D13B /* hkDemo */; };
 		68F65ABC1E14C9A900F18741 /* hktaobao in Resources */ = {isa = PBXBuildFile; fileRef = 68F65ABB1E14C9A900F18741 /* hktaobao */; };
 		68FCBF241E46343D0030E994 /* MomoChat in Resources */ = {isa = PBXBuildFile; fileRef = 68FCBF231E46343D0030E994 /* MomoChat */; };
 		68FDE22D1E84F38E0060B78A /* wxReadPlug in Resources */ = {isa = PBXBuildFile; fileRef = 68FDE22C1E84F38D0060B78A /* wxReadPlug */; };
@@ -77,6 +79,7 @@
 		683229831E1CE52500D39A24 /* hkSpringBoard */ = {isa = PBXFileReference; lastKnownFileType = folder; path = hkSpringBoard; sourceTree = "<group>"; };
 		683229851E1CF1A400D39A24 /* hkWeiXinPlugins */ = {isa = PBXFileReference; lastKnownFileType = folder; path = hkWeiXinPlugins; sourceTree = "<group>"; };
 		68359FAA1E8D2BC1000E59A4 /* hkWeixinNearByPeople */ = {isa = PBXFileReference; lastKnownFileType = folder; path = hkWeixinNearByPeople; sourceTree = "<group>"; };
+		684506DB1EA9BAD300458072 /* alsnth */ = {isa = PBXFileReference; lastKnownFileType = folder; path = alsnth; sourceTree = "<group>"; };
 		685BD5A31E516E9500354634 /* Preferences2 */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Preferences2; sourceTree = "<group>"; };
 		685BD5A41E516E9500354634 /* smyvpn */ = {isa = PBXFileReference; lastKnownFileType = folder; path = smyvpn; sourceTree = "<group>"; };
 		6861F0C01E75B2FA005723D1 /* WeChat6.5.5 */ = {isa = PBXFileReference; lastKnownFileType = folder; path = WeChat6.5.5; sourceTree = "<group>"; };
@@ -112,6 +115,7 @@
 		68AD90A31E14CBAA006E6152 /* hkwxsearch */ = {isa = PBXFileReference; lastKnownFileType = folder; path = hkwxsearch; sourceTree = "<group>"; };
 		68B9502E1E729EBB005D1257 /* systemVersion */ = {isa = PBXFileReference; lastKnownFileType = folder; path = systemVersion; sourceTree = "<group>"; };
 		68B950301E72E30B005D1257 /* attackChatRoom */ = {isa = PBXFileReference; lastKnownFileType = folder; path = attackChatRoom; sourceTree = "<group>"; };
+		68BBF72C1EA769C600C5D13B /* hkDemo */ = {isa = PBXFileReference; lastKnownFileType = folder; path = hkDemo; sourceTree = "<group>"; };
 		68F65ABB1E14C9A900F18741 /* hktaobao */ = {isa = PBXFileReference; lastKnownFileType = folder; path = hktaobao; sourceTree = "<group>"; };
 		68FCBF231E46343D0030E994 /* MomoChat */ = {isa = PBXFileReference; lastKnownFileType = folder; path = MomoChat; sourceTree = "<group>"; };
 		68FDE22C1E84F38D0060B78A /* wxReadPlug */ = {isa = PBXFileReference; lastKnownFileType = folder; path = wxReadPlug; sourceTree = "<group>"; };
@@ -145,6 +149,8 @@
 		687C5E0F1E14C953002167C4 = {
 			isa = PBXGroup;
 			children = (
+				684506DB1EA9BAD300458072 /* alsnth */,
+				68BBF72C1EA769C600C5D13B /* hkDemo */,
 				68902B821E961F31001A2769 /* wxSendVoice */,
 				68359FAA1E8D2BC1000E59A4 /* hkWeixinNearByPeople */,
 				68FDE22C1E84F38D0060B78A /* wxReadPlug */,
@@ -338,6 +344,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				684506DC1EA9BAD300458072 /* alsnth in Resources */,
 				6801F59F1E76479F00F2D586 /* enterChatRoom in Resources */,
 				68FCBF241E46343D0030E994 /* MomoChat in Resources */,
 				682A7E0C1E4AE80000E3EEED /* Preferences in Resources */,
@@ -351,6 +358,7 @@
 				68AD90A81E14CBAA006E6152 /* hkweixin in Resources */,
 				68AD90A61E14CBAA006E6152 /* hkregwx in Resources */,
 				6894C5C61E7146C00029D49A /* wxmainkeyhk in Resources */,
+				68BBF72D1EA769C600C5D13B /* hkDemo in Resources */,
 				68AD90A51E14CBAA006E6152 /* hkmttileTB in Resources */,
 				680805E01E2B4BD4004045FE /* mycontacts in Resources */,
 				68AD90921E14CB52006E6152 /* hkBrowerJD in Resources */,

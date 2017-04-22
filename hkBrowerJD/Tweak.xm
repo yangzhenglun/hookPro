@@ -492,6 +492,66 @@ extern "C" NSString * readFileData(NSString * fileName) {
             [self stringByEvaluatingJavaScriptFromString:clickMyOrder];
         }
 
+    }else if([title rangeOfString:@"pcashier.jd.com"].location != NSNotFound){
+        NSLog(@"当前进行了京东支付页面");
+
+        //点击详情页
+        NSString *jsOrderDetail = @"$(\".o-detail a\")[0].click()";
+        [self stringByEvaluatingJavaScriptFromString:jsOrderDetail];
+
+        //读出配置文件的值
+//        write2File(@"/var/root/search/operate.txt", @"1"); //hook告诉脚本截图
+//        write2File(@"/var/root/search/operate.txt", @"2"); //脚本告诉hook 可以进行下一步
+//        write2File(@"/var/root/search/operate.txt", @"3"); //hook告诉脚本点击银行卡
+
+        NSString *operateText = readFileData(@"/var/root/search/operate.txt");
+
+        if([operateText isEqualToString:@"2"]){
+
+            NSMutableDictionary *isBank = loadSearchItem();
+
+            NSLog(@"MMHK select bank %@",isBank);
+
+            int bank = (int)[[isBank objectForKey:@"bank"] intValue];  //银行开关
+
+            //选择银行
+            NSString *clickBank = @"";//[NSString stringWithFormat:@"$('#bank-%@').click();",bank];
+
+            if(bank == 1){
+                NSLog(@"MMHK 11  select is bank %@ , bank:%d",clickBank,bank);
+                //民生银行
+                clickBank =@"setTimeout(function() { if ($('.pay-newUser .ui-button-XL').length == 1) { $('.pay-newUser .ui-button-XL')[0].click(); }else{ $('.pn-new')[0].click();}}, 2 * 1000); setTimeout(function() { $('li.nm-tab-wangyin')[0].click() }, 4 * 1000); setTimeout(function() { var items = $('div.payment-list li.pl-item').not(':hidden'); for (var i = 0; i < items.length; i++) { if ( $(items[i]).find('#bank-cmbc').length == 0 ) $(items[i]).hide();}; $('li.pl-more').css('background-color', 'red'); }, 6 * 1000);";
+                [self stringByEvaluatingJavaScriptFromString:clickBank];
+
+            }else if(bank == 2){
+                NSLog(@"MMHK 22  select is bank %@ , bank:%d",clickBank,bank);
+
+                //招商银行
+                clickBank =@"setTimeout(function() { if ($('.pay-newUser .ui-button-XL').length == 1) { $('.pay-newUser .ui-button-XL')[0].click(); }else{ $('.pn-new')[0].click();}}, 2 * 1000); setTimeout(function() { $('li.nm-tab-wangyin')[0].click() }, 4 * 1000); setTimeout(function() { var items = $('div.payment-list li.pl-item').not(':hidden'); for (var i = 0; i < items.length; i++) { if ( $(items[i]).find('#bank-cmb').length == 0 ) $(items[i]).hide();}; $('li.pl-more').css('background-color', 'red'); }, 6 * 1000);";
+                [self stringByEvaluatingJavaScriptFromString:clickBank];
+                
+            }
+
+            //告诉脚本点击
+            write2File(@"/var/root/search/operate.txt", @"3");
+            
+        }else{
+
+            write2File(@"/var/root/search/operate.txt", @"1"); //hook告诉脚本截图
+        }
+
+        //存储订单ID
+        NSArray *listArray = [title componentsSeparatedByString:@"&"]; //从字符A中分隔成2个元素的数组
+        NSArray *idList = [listArray[0] componentsSeparatedByString:@"="];
+        NSString *orderId = idList[1];
+
+        NSLog(@"listArray:%@ idList:%@ orderId:%@",listArray,idList,orderId);
+        
+        //写入orderID
+        write2File(@"/var/root/search/jdOrderId.txt", orderId);
+        
+        
+        
     }else if([title rangeOfString:@"passport.jd.com/"].location != NSNotFound){
 
         m_currentPage = 0;

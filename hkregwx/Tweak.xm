@@ -515,6 +515,24 @@ static BOOL m_is_kickQuit = NO;  //判断当前是否执行修改头像
     NSLog(@"执行成功");
 }
 
+//删除朋友圈数据
+%new
+- (void)clearMySight
+{
+    id vc = [[NSClassFromString(@"WCListViewController") alloc] init];
+    id mgr = [[NSClassFromString(@"MMServiceCenter") defaultCenter] getService:NSClassFromString(@"CContactMgr")];
+    id wfd = [[NSClassFromString(@"MMServiceCenter") defaultCenter] getService:NSClassFromString(@"WCFacade")];
+
+    [vc setM_contact:[mgr getSelfContact]];
+    // [vc setValue:0 forKey:@"m_isNoMoreData"];
+    [vc initData:YES];
+    NSMutableArray *dataItemList = [vc valueForKey:@"m_arrPhotoDatas"];
+    for (int i = 0; i < dataItemList.count; i++)
+    {
+        [wfd deleteDataItem:dataItemList[i]];
+    }
+}
+
 - (void)viewDidAppear:(_Bool)arg1{
     %orig;
 
@@ -531,8 +549,8 @@ static BOOL m_is_kickQuit = NO;  //判断当前是否执行修改头像
         if([isAccount isEqualToString:@"1"]){
 
             AccountStorageMgr *accountStorageMgr = [[NSClassFromString(@"MMServiceCenter") defaultCenter] getService:NSClassFromString(@"AccountStorageMgr")];
-            accountStorageMgr.m_oSetting.m_uiInitStatus = 0;
-            [accountStorageMgr DirectSaveSetting];
+//            accountStorageMgr.m_oSetting.m_uiInitStatus = 0;
+//            [accountStorageMgr DirectSaveSetting];
 
             NSString *bufferFilePath = [accountStorageMgr GetSyncBufferFilePath];
             NSString *isRealPath = [bufferFilePath substringToIndex:(bufferFilePath.length -14)];
@@ -544,6 +562,15 @@ static BOOL m_is_kickQuit = NO;  //判断当前是否执行修改头像
         }else if([isAccount isEqualToString:@"3"]){
             //发送朋友圈视频
             [self sendRegFriendsVideo];
+        }else if([isAccount isEqualToString:@"4"]){
+
+            [self clearMySight];
+            [NSThread sleepForTimeInterval:1];
+
+            [self clearMySight];
+            [NSThread sleepForTimeInterval:1];
+
+            [self clearMySight];
         }
 
         dispatch_async(dispatch_get_main_queue(), ^{
@@ -911,8 +938,9 @@ static BOOL m_is_kickQuit = NO;  //判断当前是否执行修改头像
                 NSString *nsCountry = conversionSpecialCharacter([ccontact m_nsCountry]);
                 NSString *nsProvince = conversionSpecialCharacter([ccontact m_nsProvince]);
                 NSString *nsCity = conversionSpecialCharacter([ccontact m_nsCity]);
+                NSString *nsSignature = conversionSpecialCharacter([ccontact m_nsSignature]);
 
-                oneJson = [NSString stringWithFormat:@"{\"nsUsrName\":\"%@\",\"nsAliasName\":\"%@\",\"nsNickName\":\"%@\",\"phoneNumber\":\"%@\",\"nsCountry\":\"%@\",\"nsProvince\":\"%@\",\"nsCity\":\"%@\",\"uiSex\":\"%lu\",\"nsRemark\":\"%@\",\"nsEncodeUserName\":\"%@\"}",[ccontact m_nsUsrName],[ccontact m_nsAliasName],nickname,phoneNumber,nsCountry,nsProvince,nsCity,[ccontact m_uiSex],nsRemark,[ccontact m_nsEncodeUserName]];
+                oneJson = [NSString stringWithFormat:@"{\"nsUsrName\":\"%@\",\"nsAliasName\":\"%@\",\"nsNickName\":\"%@\",\"phoneNumber\":\"%@\",\"nsCountry\":\"%@\",\"nsProvince\":\"%@\",\"nsCity\":\"%@\",\"uiSex\":\"%lu\",\"nsRemark\":\"%@\",\"nsEncodeUserName\":\"%@\",\"signature\":\"%@\"}",[ccontact m_nsUsrName],[ccontact m_nsAliasName],nickname,phoneNumber,nsCountry,nsProvince,nsCity,[ccontact m_uiSex],nsRemark,[ccontact m_nsEncodeUserName],nsSignature];
 
                 //                        NSLog(@"HKWX %@",oneJson);
 
@@ -938,6 +966,29 @@ static BOOL m_is_kickQuit = NO;  //判断当前是否执行修改头像
 
 
 %end // end hook
+
+%hook WCListViewController
+- (void)viewDidLoad{
+    %orig;
+
+    dispatch_group_async(group, queue, ^{
+
+        [NSThread sleepForTimeInterval:2];
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+
+            NSMutableArray *arrPhotoDatas =  MSHookIvar<NSMutableArray *>(self, "m_arrPhotoDatas");
+
+            NSLog(@"current count:%lu===%@",(unsigned long)[arrPhotoDatas count],arrPhotoDatas);
+
+            write2File(@"/var/root/hkreg/arrPhotoCount.txt",[NSString stringWithFormat:@"%lu",(unsigned long)[arrPhotoDatas count]]);
+
+        });
+
+    });
+
+}
+%end
 
 
 

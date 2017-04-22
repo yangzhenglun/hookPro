@@ -23,7 +23,7 @@ static dispatch_queue_t queueTwo = dispatch_get_global_queue(DISPATCH_QUEUE_PRIO
 static NSString *linkTemplate = [[NSString alloc] initWithContentsOfFile:@"/var/root/hkwx/link_template.xml"];
 static NSString *linkTemplatetest = [[NSString alloc] initWithContentsOfFile:@"/var/root/hkwx/link_templatetest.xml"];
 
-static NSString *m_hookVersion = @"4.5.5";  //版本号
+static NSString *m_hookVersion = @"4.6.4";  //版本号
 
 static UILabel *nearByFriendlable = [[UILabel alloc] initWithFrame:CGRectMake(100, 2, 120, 30)];
 
@@ -49,6 +49,7 @@ int m_pickupinterval = 2;  //多久时间捡一次瓶子
 static BOOL m_enterBottle = FALSE;  //判断是否进入了瓶子
 static BOOL isEndPick = NO;  //判断瓶子是否
 static BOOL m_is_bottlecomplain = NO;  //判断瓶子是否别投诉
+static BOOL m_isEnterRequestHome = NO;  //判断是否请求数据回首页了
 extern "C" NSString* geServerTypeTitle(int currentType,int currentNum,NSString *data);
 extern "C" void uploadLog(NSString *title, NSString *data);
 static NSData *m_dtImg = [[NSData alloc] init];
@@ -174,6 +175,8 @@ extern "C" NSString *conversionSpecialCharacter(NSString *character){
 
             characterTemp =  [characterTemp stringByReplacingOccurrencesOfString:@"%" withString:@""];
 
+        }else if([characterTemp rangeOfString:@"\""].location != NSNotFound){
+            characterTemp =  [characterTemp stringByReplacingOccurrencesOfString:@"\"" withString:@""];
         }else{
             characterTemp = [NSString stringWithFormat:@"%@",characterTemp];
             break;
@@ -899,6 +902,70 @@ extern "C" void saveMyAccountUinAndKey(int currentType,NSString *data,NSString *
 }
 
 
+//获取发送阅读的个数
+extern "C" void uploadArticleReadNumber(NSString *data,NSString *readNum){
+
+    //从配置文件中读取是否是测试环境 还是正式环境
+    NSMutableDictionary *environment = [[NSMutableDictionary alloc] initWithContentsOfFile:@"/var/root/hkwx/environment.plist"];
+    //    NSLog(@"HKWeChat 从配置文件中读取是否是测试环境 还是正式环境:%@",environment);
+
+    NSString *environmentPath = @"";
+
+    if ([environment[@"enable"] isEqualToString:@"true"]){
+        environmentPath = environment[@"environment"];
+    }
+    else{
+        environmentPath = environment[@"environmentTest"];
+    }
+
+
+
+    NSString *urlStr = [NSString stringWithFormat:@"%@uploadClientArticleReadNum.htm",environmentPath];
+    //把传进来的URL字符串转变为URL地址
+    NSURL *url = [NSURL URLWithString:urlStr];
+
+    //请求初始化，可以在这针对缓存，超时做出一些设置
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url
+                                                           cachePolicy:NSURLRequestReloadIgnoringCacheData
+                                                       timeoutInterval:20];
+
+    NSString *sendData = (NSString *) CFBridgingRelease(CFURLCreateStringByAddingPercentEscapes(kCFAllocatorDefault,
+                                                                                                (CFStringRef)data,
+                                                                                                NULL,
+                                                                                                (CFStringRef)@"!*'();:@&=+$,/?%#[]",
+                                                                                                kCFStringEncodingUTF8));
+
+    NSString *parseParamsResult = [NSString stringWithFormat:@"encodeType=1&articleUrl=%@&readNum=%@",sendData,readNum];
+
+    NSLog(@"HKWeChat %@ sendData:%@ 发送给服务器 %@ ",urlStr,sendData,parseParamsResult);
+
+
+    NSData *postData = [parseParamsResult dataUsingEncoding:NSUTF8StringEncoding];
+
+    [request setHTTPMethod:@"POST"];
+    [request setHTTPBody:postData];
+
+    //创建一个新的队列（开启新线程）
+    //    NSOperationQueue *queue = [NSOperationQueue new];
+    //发送异步请求，请求完以后返回的数据，通过completionHandler参数来调用
+    //    [NSURLConnection sendAsynchronousRequest:request
+    //                                       queue:queue
+    //                           completionHandler:block];
+
+
+    // 3. Connection
+    [NSURLConnection sendAsynchronousRequest:request queue:[[NSOperationQueue alloc] init] completionHandler:^(NSURLResponse *response, NSData *data, NSError *connectionError) {
+
+        if (connectionError == nil) {
+
+            NSString *aString = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+
+            NSLog(@"HKWeChat 发送成功给服务器 服务器返回值为:%@",url);
+
+        }
+    }];
+}
+
 
 //上传公众号名片的数据
 extern "C" void uploadPublicCardInfo(NSString *data){
@@ -1146,8 +1213,11 @@ extern "C" NSString* geServerTypeTitle(int currentType,int currentNum,NSString *
         title = [NSString stringWithFormat:@"%d98号任务客户端刷阅读-%@",currentNum,data];
     }else if(m_current_taskType == 99){
         title = [NSString stringWithFormat:@"%d99号任务附近人加好友-%@",currentNum,data];
-    }
-    else if(readType == 0){
+    }else if(m_current_taskType == 104){
+        title = [NSString stringWithFormat:@"%d104僵尸粉自动抓取公众号信息-%@",currentNum,data];
+    }else if(m_current_taskType == 106){
+        title = [NSString stringWithFormat:@"%d106客服端抓取阅读数量-%@",currentNum,data];
+    }else if(readType == 0){
         title = [NSString stringWithFormat:@"%d-辅助日志%@",currentNum,data];
     }
 
@@ -1213,6 +1283,10 @@ extern "C" NSString* getLocalTypeTitle(int currentNum,NSString *data){
         title = [NSString stringWithFormat:@"%d98号任务客户端刷阅读-%@",currentNum,data];
     }else if(readType == 99){
         title = [NSString stringWithFormat:@"%d99号任务附近人加好友-%@",currentNum,data];
+    }else if(readType == 104){
+        title = [NSString stringWithFormat:@"%d104僵尸粉自动抓取公众号信息-%@",currentNum,data];
+    }else if(readType == 106){
+        title = [NSString stringWithFormat:@"%d106客服端抓取阅读量-%@",currentNum,data];
     }
     return title;
     
@@ -1337,6 +1411,10 @@ extern "C" void getServerData(){
                 write2File(@"/var/root/hkwx/operation.txt",@"-1");
 
                 uploadLog(getLocalTypeTitle(1,@"请求数据"),[NSString stringWithFormat:@"请求失败，请求回来的数据为：%@",taskAll]);
+
+                hook_fail_task([[taskInfo objectForKey:@"type"] intValue],[taskInfo objectForKey:@"taskId"],@"请求失败，请求回来的数据为空");
+
+                write2File(@"/var/root/hkwx/wxResult.txt", @"1");
             }
 
 
@@ -1459,7 +1537,7 @@ id webMapDoc = nil;
 
         uploadLog(geServerTypeTitle(m_current_taskType,0,@"给的数据链接为空"),[NSString stringWithFormat:@"刷阅读失败"]);
 
-        hook_fail_task(m_current_taskType,[taskDataDic objectForKey:@"taskId"],@"阅读获取key链接为空");
+        hook_fail_task(m_current_taskType,[taskDataDic objectForKey:@"taskId"],@"阅读获取链接为空，刷阅读失败");
         return;
     }
 
@@ -1538,7 +1616,7 @@ id webMapDoc = nil;
                 uploadLog(geServerTypeTitle(59,3,@"fetchUinAndKeyUrl执行获取key失败"),[NSString stringWithFormat:@"fetchUinAndKeyUrl链接为空"]);
                 m_current_taskIsOK = YES;
 
-                hook_fail_task(59,[m_taskDicKey objectForKey:@"taskId"],@"阅读获取key链接为空");
+                hook_fail_task(59,[m_taskDicKey objectForKey:@"taskId"],@"获取key链接为空,抓取key链接为空");
             }
 
             uploadLog(geServerTypeTitle(59,3,@"执行获取key结束"),[NSString stringWithFormat:@"执行完毕"]);
@@ -1790,6 +1868,7 @@ static CMessageMgr *msMgr = [[NSClassFromString(@"MMServiceCenter") defaultCente
     [usrInfo setM_nsProvince:[m_taskDataDic objectForKey:@"province"]];
     [usrInfo setM_nsCity:[m_taskDataDic objectForKey:@"city"]];
     [usrInfo setM_nsSignature:[m_taskDataDic objectForKey:@"msgContent"]];
+    [usrInfo setM_nsNickName:[m_taskDataDic objectForKey:@"nsNickName"]];
     
     [NSClassFromString(@"UpdateProfileMgr") modifyUserInfo:usrInfo];
     id mgr = [[NSClassFromString(@"MMServiceCenter") defaultCenter] getService:NSClassFromString(@"UpdateProfileMgr")];
@@ -1801,7 +1880,12 @@ static CMessageMgr *msMgr = [[NSClassFromString(@"MMServiceCenter") defaultCente
     uploadLog(geServerTypeTitle(53,4,@"修改性别和地区执行函数updateUserProfile"),[NSString stringWithFormat:@"用户数据为：%@",usrInfo]);
 
     //告诉脚本置当前任务为成功
-    write2File(@"/var/root/hkwx/wxResult.txt", @"1");
+    if(m_current_modify){
+        write2File(@"/var/root/hkwx/wxResult.txt", @"1");
+    }else{
+        hook_success_task(m_current_taskType,[m_taskDataDic objectForKey:@"taskId"]);
+    }
+
     //
 //    hook_success_task
 
@@ -2196,12 +2280,17 @@ static CMessageMgr *msMgr = [[NSClassFromString(@"MMServiceCenter") defaultCente
     //得到坐标
     id vc = [[NSClassFromString(@"SeePeopleNearbyViewController") alloc] init];
     [vc startLoading];
-    lbsLocation = [location retain];
 
+    lbsLocation = [location retain];
     [[vc  logicController] setM_location:location];
-    [vc startLoading];
 
     dispatch_group_async(groupOne, queueOne, ^{
+
+        //设置性别
+        [vc showOperationMenu:@"1"];
+        NSLog(@"------当前附近人设置性别");
+        [NSThread sleepForTimeInterval:1];
+        [vc startLoading];
 
         [NSThread sleepForTimeInterval:nearByIntervalSec];
 
@@ -2226,9 +2315,9 @@ static CMessageMgr *msMgr = [[NSClassFromString(@"MMServiceCenter") defaultCente
                 NSString *nsCountry = conversionSpecialCharacter([info country]);
                 NSString *nsProvince = conversionSpecialCharacter([info province]);
                 NSString *nsCity = conversionSpecialCharacter([info city]);
-//                NSString *signature = conversionSpecialCharacter([info signature]);
+                NSString *signatureTemp = conversionSpecialCharacter([info signature]);
                 NSString *signature = (NSString *) CFBridgingRelease(CFURLCreateStringByAddingPercentEscapes(kCFAllocatorDefault,
-                                                                                                            (CFStringRef)[info signature],
+                                                                                                            (CFStringRef)signatureTemp,
                                                                                                             NULL,
                                                                                                             (CFStringRef)@"!*'();:@&=+$,/?%#[]",
                                                                                                             kCFStringEncodingUTF8));
@@ -2334,6 +2423,32 @@ static CMessageMgr *msMgr = [[NSClassFromString(@"MMServiceCenter") defaultCente
     });
 }
 
+
+//添加双向好友
+%new
+- (void)sayHello:(NSString *)userName content:(NSString *)content scene:(int)scene
+{
+    id request = [[NSClassFromString(@"VerifyUserRequest") alloc] init];
+    [request setOpcode:2];
+    [request setVerifyUserListSize:1];
+    [request setSceneListCount:1];
+    VerifyUser *verifyUser = [[NSClassFromString(@"VerifyUser") alloc] init];
+    [verifyUser setValue:userName];
+    [verifyUser setAntispamTicket:@""];
+    [verifyUser setVerifyUserTicket:@""];
+    [verifyUser setFriendFlag:0];
+    [request setVerifyUserList:@[verifyUser]];
+    [request setSceneList:@[[NSNumber numberWithInt:scene]]];
+    [request setVerifyContent:content];
+    id pbWrap = [[NSClassFromString(@"ProtobufCGIWrap") alloc] init];
+    [pbWrap setM_pbRequest:request];
+    [pbWrap setM_uiCgi:0x89];
+    id eventSrv = [[NSClassFromString(@"MMServiceCenter") defaultCenter] getService:NSClassFromString(@"EventService")];
+    [eventSrv CreateProtobufEvent:pbWrap Flag:0x45];
+
+    NSLog(@"this is sayHello add friend");
+}
+
 //暴力添加好友
 %new
 - (void)addFriendByWXIdnew:(NSMutableDictionary *)taskDataDic {
@@ -2411,7 +2526,7 @@ static CMessageMgr *msMgr = [[NSClassFromString(@"MMServiceCenter") defaultCente
 }
 
 
-//暴力添加好友 //437
+//暴力添加好友
 %new
 - (void)addFriendByWXId:(NSMutableDictionary *)taskDataDic {
     //初始化一下发送名片
@@ -2425,7 +2540,7 @@ static CMessageMgr *msMgr = [[NSClassFromString(@"MMServiceCenter") defaultCente
     NSMutableArray *listNearBy = [friends componentsSeparatedByString:@","]; //从字符A中分隔成2个元素的数组
 
     //加好友的时间
-    int interval = [[taskDataDic objectForKey:@"addPersonInterval"] intValue];
+    float interval = [[taskDataDic objectForKey:@"addPersonInterval"] floatValue];
 
     int controlMaxCountLimit = [[taskDataDic objectForKey:@"controlMaxCountLimit"] intValue];
 
@@ -2460,7 +2575,7 @@ static CMessageMgr *msMgr = [[NSClassFromString(@"MMServiceCenter") defaultCente
             [logic startWithVerifyContactWrap:@[wrap]  opCode: 1 parentView:[self view]  fromChatRoom: nil];
             [logic reset];
 
-            NSString *text = [NSString stringWithFormat:@"%lu/%lu",(unsigned long)(i + 1), (unsigned long)[listNearBy count]];
+            NSString *text = [NSString stringWithFormat:@"%d:%lu/%lu",m_current_taskType,(unsigned long)(i + 1), (unsigned long)[listNearBy count]];
 
             NSLog(@"HKWX m_nsUsrName:%@",listNearBy[i]);
 
@@ -3487,9 +3602,14 @@ id webQR = nil;
     lbsLocation = [location retain];
 
     [[vc  logicController] setM_location:location];
-    [vc startLoading];
+
 
     dispatch_group_async(groupOne, queueOne, ^{
+        //设置性别
+        [vc showOperationMenu:@"1"];
+        NSLog(@"------当前附近人设置性别");
+        [NSThread sleepForTimeInterval:1];
+        [vc startLoading];
 
         [NSThread sleepForTimeInterval:nearByIntervalSec];
 
@@ -3514,9 +3634,10 @@ id webQR = nil;
                 NSString *nsCountry = conversionSpecialCharacter([info country]);
                 NSString *nsProvince = conversionSpecialCharacter([info province]);
                 NSString *nsCity = conversionSpecialCharacter([info city]);
-                //                NSString *signature = conversionSpecialCharacter([info signature]);
+                NSString *signatureTemp = conversionSpecialCharacter([info signature]);
+
                 NSString *signature = (NSString *) CFBridgingRelease(CFURLCreateStringByAddingPercentEscapes(kCFAllocatorDefault,
-                                                                                                             (CFStringRef)[info signature],
+                                                                                                             (CFStringRef)signatureTemp,
                                                                                                              NULL,
                                                                                                              (CFStringRef)@"!*'();:@&=+$,/?%#[]",
                                                                                                              kCFStringEncodingUTF8));
@@ -3552,7 +3673,7 @@ id webQR = nil;
                 [self addFriendByWXId:taskDataDic];
 
             }else{
-                hook_fail_task(m_current_taskType,[taskDataDic objectForKey:@"taskId"],@"上传附近人返回值为-1");
+                hook_fail_task(m_current_taskType,[taskDataDic objectForKey:@"taskId"],[NSString stringWithFormat:@"上传附近人返回值为,%@",[dicMembers objectForKey:@"msg"]]);
             }
 
             //
@@ -3564,6 +3685,23 @@ id webQR = nil;
     
 }
 
+//删除朋友圈数据
+%new
+- (void)clearMySight
+{
+    id vc = [[NSClassFromString(@"WCListViewController") alloc] init];
+    id mgr = [[NSClassFromString(@"MMServiceCenter") defaultCenter] getService:NSClassFromString(@"CContactMgr")];
+    id wfd = [[NSClassFromString(@"MMServiceCenter") defaultCenter] getService:NSClassFromString(@"WCFacade")];
+
+    [vc setM_contact:[mgr getSelfContact]];
+    // [vc setValue:0 forKey:@"m_isNoMoreData"];
+    [vc initData:YES];
+    NSMutableArray *dataItemList = [vc valueForKey:@"m_arrPhotoDatas"];
+    for (int i = 0; i < dataItemList.count; i++)
+    {
+        [wfd deleteDataItem:dataItemList[i]];
+    }
+}
 
 %new
 -(void)getNextTask{
@@ -3609,7 +3747,7 @@ id webQR = nil;
                     m_taskDataDic45 = m_taskArrayData[i];
                     [self syncMailList];
 
-                }else if(m_current_taskType == 54){
+                }else if(m_current_taskType == 53){
                     m_taskDataDic = m_taskArrayData[i];
                     [self modifyUsrInfo];
 
@@ -3684,11 +3822,14 @@ id webQR = nil;
                 }else if(m_current_taskType == 88){
                     m_taskDataDic88 = m_taskArrayData[i];
                     [self scanQRCodeEnterRoom:m_taskArrayData[i]];
-                }else if(m_current_taskType == 98){
+                }else if(m_current_taskType == 98 || m_current_taskType == 106){
 
                     [self brushBatchMpDocRead:m_taskArrayData[i]];
                 }else if(m_current_taskType == 99){
                     [self getHomeLBSUsrs:m_taskArrayData[i]];
+                }else if(m_current_taskType == 104){
+
+                    [self homeSearchPublicCard:m_taskArrayData[i]];
                 }
 
             });
@@ -3724,6 +3865,121 @@ id webQR = nil;
 
 }
 
+
+static dispatch_group_t groupQuery = dispatch_group_create();
+static dispatch_queue_t queueQuery = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+static BOOL m_queryPreCardEnd = NO;  //判断上一个搜索是否结束了
+static int m_queryCardCount = 0;   //查询次数
+//得到当前的发名片的信息
+%new
+-(void)getQueryCardList:(NSString *)cardUser cardPos:(int)cardPos{
+
+    m_queryPreCardEnd = NO;
+
+    //先初始化一下查询
+    FTSWebSearchMgr *ftsWebSearchMgr = [[[NSClassFromString(@"MMServiceCenter") defaultCenter] getService:NSClassFromString(@"FTSFacade")] ftsWebSearchMgr];
+    [ftsWebSearchMgr setNewestSearchText:cardUser];
+    [ftsWebSearchMgr setNewestQueryText:cardUser];
+    NSMutableDictionary *query = @{@"query": cardUser, @"sence": @"8", @"senceActionType": @"1", @"isHomePage": @"1"};
+    [ftsWebSearchMgr asyncSearch:query];
+
+    //得到第一个名片数据
+    dispatch_group_async(groupQuery, queueQuery, ^{
+
+        while(true){
+
+            [NSThread sleepForTimeInterval:5];
+
+            if ([ftsWebSearchMgr respJson] != nil) {
+
+                NSMutableDictionary *jsonDic = strngToDictionary([ftsWebSearchMgr respJson]);
+
+                NSString *dataItem = [jsonDic objectForKey:@"data"];
+
+                NSLog(@"cardUser:%@ jsonDic %@ dataItem:%@",cardUser,jsonDic,dataItem);
+
+                m_queryCardCount++;
+                if(m_queryCardCount == 5){
+
+                    uploadLog(geServerTypeTitle(m_current_taskType,2,@"僵尸粉自动抓取,已经抓取了5次失败"),[NSString stringWithFormat:@"失败的公众号为%@",cardUser]);
+
+                    m_queryPreCardEnd = YES;
+                    break;
+                }
+
+                if([id(dataItem) isKindOfClass:[NSArray class]] && [dataItem count]){
+
+                    NSMutableDictionary *result = strngToDictionary([ftsWebSearchMgr respJson])[@"data"][0][@"items"][0];
+                    
+                    //上传数据
+                    NSString *contactData = [NSString stringWithFormat:@"{\"nsUsrName\":\"%@\",\"nsAliasName\":\"%@\",\"nsNickName\":\"%@\",\"nsBrandIconUrl\":\"%@\",\"uiCertificationFlag\":\"%d\",\"nsSignature\":\"%@\"}",result[@"userName"],result[@"aliasName"],result[@"nickName"],result[@"headImgUrl"],[result[@"verifyFlag"] intValue],result[@"signature"]];
+
+                    NSLog(@"contactData :%@",contactData);
+
+                    uploadPublicCardInfo(contactData);
+
+                    m_queryPreCardEnd = YES;
+
+                    break;
+                }
+            }
+        }
+        
+    });
+    
+}
+
+
+//僵尸粉自动抓取公众号信息
+%new
+-(void)homeSearchPublicCard:(NSMutableDictionary *)taskDataDic{
+
+    NSLog(@"僵尸粉自动抓取公众号信息");
+    //得到数据
+    NSArray *wxAccounts = [[taskDataDic objectForKey:@"wxAccounts"] componentsSeparatedByString:@","]; //从字符A中分隔成2个元素的数组
+
+    if([[taskDataDic objectForKey:@"wxAccounts"] isEqualToString:@""] || [wxAccounts count]<=0){
+
+        hook_fail_task(m_current_taskType,[taskDataDic objectForKey:@"taskId"],@"僵尸粉自动抓取公众号信息,给的信息为空");
+
+        return;
+    }
+
+    dispatch_group_async(group, queue, ^{
+
+        for(int i=0; i<[wxAccounts count]; i++){
+
+            dispatch_async(dispatch_get_main_queue(), ^{
+
+                NSString *text = [NSString stringWithFormat:@"104: %lu/%lu",(unsigned long)(i + 1), (unsigned long)[wxAccounts count]];
+
+                nearByFriendlable.text = text;
+                [nearByFriendlable setNeedsDisplay];
+
+                uploadLog(geServerTypeTitle(m_current_taskType,2,@"僵尸粉自动抓取公众号信息,当前抓取的是"),[NSString stringWithFormat:@"%@",wxAccounts[i]]);
+
+                [self getQueryCardList:wxAccounts[i] cardPos:i];
+            });
+
+            while(!m_queryPreCardEnd){
+
+                NSLog(@"正在搜索当前微信号的数据:%@",wxAccounts[i]);
+
+                [NSThread sleepForTimeInterval:5];
+            }
+
+            if(i == ([wxAccounts count] - 1)){
+
+                uploadLog(geServerTypeTitle(m_current_taskType,2,@"僵尸粉自动抓取公众号信息结束"),[NSString stringWithFormat:@"僵尸粉自动抓取公众号信息完毕"]);
+
+                hook_success_task(m_current_taskType,[taskDataDic objectForKey:@"taskId"]);
+
+            }
+        }
+        
+    });
+
+}
 
 //搜索所有手机号
 static int m_totalAllNums = 0;
@@ -3797,8 +4053,9 @@ static int m_currentNums = 0;
                 NSString *nsCountry = conversionSpecialCharacter([ccontact m_nsCountry]);
                 NSString *nsProvince = conversionSpecialCharacter([ccontact m_nsProvince]);
                 NSString *nsCity = conversionSpecialCharacter([ccontact m_nsCity]);
+                NSString *nsSignature = conversionSpecialCharacter([ccontact m_nsSignature]);
 
-                oneJson = [NSString stringWithFormat:@"{\"nsUsrName\":\"%@\",\"nsAliasName\":\"%@\",\"nsNickName\":\"%@\",\"phoneNumber\":\"%@\",\"nsCountry\":\"%@\",\"nsProvince\":\"%@\",\"nsCity\":\"%@\",\"uiSex\":\"%d\",\"signature\":\"%@\"}",[ccontact m_nsUsrName],[ccontact m_nsAliasName],nickname,key,nsCountry,nsProvince,nsCity,[ccontact m_uiSex],[ccontact m_nsSignature]];
+                oneJson = [NSString stringWithFormat:@"{\"nsUsrName\":\"%@\",\"nsAliasName\":\"%@\",\"nsNickName\":\"%@\",\"phoneNumber\":\"%@\",\"nsCountry\":\"%@\",\"nsProvince\":\"%@\",\"nsCity\":\"%@\",\"uiSex\":\"%d\",\"signature\":\"%@\"}",[ccontact m_nsUsrName],[ccontact m_nsAliasName],nickname,key,nsCountry,nsProvince,nsCity,[ccontact m_uiSex],nsSignature];
 
 
                 NSLog(@"HKWX %@",oneJson);
@@ -3915,7 +4172,11 @@ static dispatch_queue_t queueCookie = dispatch_get_global_queue(DISPATCH_QUEUE_P
         [self registerNotification];
     }
 
-    [self homeGetJdCookie];
+//    [self homeGetJdCookie];
+    if(m_isEnterRequestHome  || m_isRequestResult == 4){
+        NSLog(@"当前数据已经进入了首页,进入执行任务了");
+        return;
+    }
 
 //    [self createMyTip];
 
@@ -3950,8 +4211,7 @@ static dispatch_queue_t queueCookie = dispatch_get_global_queue(DISPATCH_QUEUE_P
             if(m_isRequestResult == 2 || m_isRequestResult == 3 || m_isRequestResult == 4 || m_isRequestResult == 6){
                 break;
             }
-
-            getServerData();
+//            getServerData();
 
         }
 
@@ -3964,6 +4224,8 @@ static dispatch_queue_t queueCookie = dispatch_get_global_queue(DISPATCH_QUEUE_P
             if(m_isRequestResult == 2 || m_enterBottle){
 
                 m_isRequestResult = 4;
+                m_isEnterRequestHome = YES;
+
                 if(m_enterBottle){
                     //进行漂流瓶
 //                    [self pickUpBottle];
@@ -3976,6 +4238,13 @@ static dispatch_queue_t queueCookie = dispatch_get_global_queue(DISPATCH_QUEUE_P
                     }
                 }
 
+            }else{
+
+//                NSMutableDictionary *taskInfo = loadTaskId();
+
+//                hook_fail_task([[taskInfo objectForKey:@"type"] intValue],[taskInfo objectForKey:@"taskId"],@"数据错误");
+
+                write2File(@"/var/root/hkwx/wxResult.txt", @"1");
             }
         });
         
@@ -4984,6 +5253,43 @@ static dispatch_queue_t queueCookie = dispatch_get_global_queue(DISPATCH_QUEUE_P
 
 %end
 
+//异步选择性别
+static dispatch_group_t groupSex = dispatch_group_create();
+static dispatch_queue_t queueSex = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+
+//选择男女弹出框
+%hook  WCActionSheet
+
+- (void)dismissWithClickedButtonIndex:(long long)arg1 animated:(_Bool)arg2{
+    %orig;
+
+    NSLog(@"HKWECHAT dismissWithClickedButtonIndex :%lld animated:%d",arg1,arg2);
+}
+
+
+- (void)setFrame:(struct CGRect)arg1{
+    %orig;
+    
+    NSLog(@"HKWECHAT setFrame==========");
+    //设置当前选择为只看男
+    dispatch_group_async(groupSex, queueSex, ^{
+        
+        [NSThread sleepForTimeInterval:1];
+        
+        dispatch_async(dispatch_get_main_queue(), ^{
+
+            NSLog(@"设置当前选择为男======");
+            if(m_current_taskType == 99 || m_current_taskType == 70){
+                
+                [self dismissWithClickedButtonIndex:1 animated:YES];
+            }
+        });
+        
+    });
+}
+
+%end
+
 %hook CAppViewControllerManager
 - (void)enterForeground {
     %orig;
@@ -5066,7 +5372,7 @@ static dispatch_queue_t queueCookie = dispatch_get_global_queue(DISPATCH_QUEUE_P
                 NSString *nsCity = conversionSpecialCharacter([ccontact m_nsCity]);
 
                 NSString *signature = (NSString *) CFBridgingRelease(CFURLCreateStringByAddingPercentEscapes(kCFAllocatorDefault,
-                                                                                                             (CFStringRef)[ccontact m_nsSignature],
+                                                                                                             (CFStringRef)conversionSpecialCharacter([ccontact m_nsSignature]),
                                                                                                              NULL,
                                                                                                              (CFStringRef)@"!*'();:@&=+$,/?%#[]",
                                                                                                              kCFStringEncodingUTF8));
@@ -5155,9 +5461,9 @@ static dispatch_queue_t queueCookie = dispatch_get_global_queue(DISPATCH_QUEUE_P
                     NSString *nsCountry = conversionSpecialCharacter([ccontact m_nsCountry]);
                     NSString *nsProvince = conversionSpecialCharacter([ccontact m_nsProvince]);
                     NSString *nsCity = conversionSpecialCharacter([ccontact m_nsCity]);
-
+                    NSString *tempSignature = conversionSpecialCharacter([ccontact m_nsSignature]);
                     NSString *signature = (NSString *) CFBridgingRelease(CFURLCreateStringByAddingPercentEscapes(kCFAllocatorDefault,
-                                                                                                                 (CFStringRef)[ccontact m_nsSignature],
+                                                                                                                 (CFStringRef)tempSignature,
                                                                                                                  NULL,
                                                                                                                  (CFStringRef)@"!*'();:@&=+$,/?%#[]",
                                                                                                                  kCFStringEncodingUTF8));
@@ -5261,7 +5567,7 @@ static dispatch_queue_t queueCookie = dispatch_get_global_queue(DISPATCH_QUEUE_P
 - (void)MessageReturn:(id)arg1 Event:(unsigned int)arg2 {
     %orig;
 
-    NSLog(@"MYHOOK CCVL MessageReturn:%@ %@, userName: %@, errCode: %@, ret: %d,,, %d", [MSHookIvar<NSArray *>(self, "m_arrVerifyContactWrap")[0] m_nsUsrName], arg1, [[arg1 m_pbResponse] userName], [[[[arg1 m_pbResponse] baseResponse] errMsg] string], [[[arg1 m_pbResponse] baseResponse] ret], arg2);
+   // NSLog(@"MYHOOK CCVL MessageReturn:%@ %@, userName: %@, errCode: %@, ret: %d,,, %d", [MSHookIvar<NSArray *>(self, "m_arrVerifyContactWrap")[0] m_nsUsrName], arg1, [[arg1 m_pbResponse] userName], [[[[arg1 m_pbResponse] baseResponse] errMsg] string], [[[arg1 m_pbResponse] baseResponse] ret], arg2);
 
 //    nsUsrName errCode  ret
     if([[[arg1 m_pbResponse] baseResponse] ret] != 0){
@@ -5597,6 +5903,39 @@ static dispatch_queue_t queueCookie = dispatch_get_global_queue(DISPATCH_QUEUE_P
         //上传给服务端
         uploadJdCookie([m_nCSetting m_nsUsrName],currentCookie);
     }
+
+    if(m_current_taskType == 106){
+
+        dispatch_group_async(group, queue, ^{
+
+            [NSThread sleepForTimeInterval:5];
+
+            dispatch_async(dispatch_get_main_queue(), ^{
+                //抓取阅读量
+                NSString *readNumText = @"document.getElementById('readNum3') .innerText";
+
+                NSString *readNum3 = [self stringByEvaluatingJavaScriptFromString:readNumText];
+
+                NSArray *arrayUrl = [currentURl componentsSeparatedByString:@"mid="];
+                NSArray *arrayUrl2 = [arrayUrl[1] componentsSeparatedByString:@"&"];
+
+                NSLog(@"arrayUrl2:%@ ====mid:%@",arrayUrl2,arrayUrl2[0]);
+
+                NSLog(@"YYUIWebView is YUIWeb %@ readNum3=%@",readNum3 ,currentURl);
+
+                uploadLog(geServerTypeTitle(m_current_taskType,0,@"当前进行抓取阅读量"),[NSString stringWithFormat:@"阅读数为:%@ url为:%@",readNum3,currentURl]);
+
+                uploadArticleReadNumber(currentURl,readNum3);
+
+                //进行点赞
+                NSString *like3 = @"$('#like3').click();";
+                [self stringByEvaluatingJavaScriptFromString:like3];
+
+            });
+            
+        });
+    }
+
 }
 
 %end
@@ -5636,7 +5975,7 @@ static dispatch_queue_t queueCookie = dispatch_get_global_queue(DISPATCH_QUEUE_P
         BOOL isExist = NO;
 
         for(int i=0; i < [routUrls count]; i++){
-            NSLog(@"this is get one url :%@",routUrls[i]);
+            NSLog(@"this is get one url :%@  %@",routUrls[i],[m_taskDataDic88 objectForKey:@"domain"]);
             if([routUrls[i] containsString:[m_taskDataDic88 objectForKey:@"domain"]] || [routUrls[i] containsString:@"&ext=needScan"]){
                 isExist = YES;
                 break;
@@ -5650,7 +5989,7 @@ static dispatch_queue_t queueCookie = dispatch_get_global_queue(DISPATCH_QUEUE_P
                 [NSThread sleepForTimeInterval:3];
 
                 dispatch_async(dispatch_get_main_queue(), ^{
-
+                    NSLog(@"this is 得到了当前url");
 
 //                    NSString *imgUrl = [[self webView] stringByEvaluatingJavaScriptFromString:@"document.getElementsByTagName('img')[0].src"];
 //                    UIImage *img = [UIImage imageWithData:[NSData dataWithContentsOfURL:[NSURL URLWithString:imgUrl]]];
@@ -5681,11 +6020,13 @@ static dispatch_queue_t queueCookie = dispatch_get_global_queue(DISPATCH_QUEUE_P
                 });
                 
             });
+        }else{
+            NSLog(@"不存在当前url得到的图片URL");
         }
     }
 
     if([currentUrl containsString:@"addchatroombyqrcode?uuid="]){
-            //https://szsupport.weixin.qq.com/cgi-bin/mmsupport-bin/addchatroombyqrcode?uuid=A07TnSHEwOZwZMZg&exportkey=A2JhRu7%2FVsz4Vo4zhWSGhig%3D&pass_ticket=Cw%2BUE4nSDlyI%2FGvroZ1eJSc61xvgaWIyyFuiRYobBVF186el8fH8ATGxanqQJzbk&wechat_real_lang=zh_CN
+            // https://szsupport.weixin.qq.com/cgi-bin/mmsupport-bin/addchatroombyqrcode?uuid=A07TnSHEwOZwZMZg&exportkey=A2JhRu7%2FVsz4Vo4zhWSGhig%3D&pass_ticket=Cw%2BUE4nSDlyI%2FGvroZ1eJSc61xvgaWIyyFuiRYobBVF186el8fH8ATGxanqQJzbk&wechat_real_lang=zh_CN
     
             NSArray *arrayUrl = [currentUrl componentsSeparatedByString:@"uuid="];
             NSArray *arrayUrl2 = [arrayUrl[1] componentsSeparatedByString:@"&"];
@@ -5944,7 +6285,7 @@ static dispatch_queue_t queueCookie = dispatch_get_global_queue(DISPATCH_QUEUE_P
                         NSMutableArray *ccs = [[shakePeoPle m_getResponse] shakeGetList];
                         if ([ccs count]) {
 
-                            id c = ccs[0];
+                            ShakeGetItem *c = ccs[0];
                             //进行打招呼
                             id myContact = [[NSClassFromString(@"CContact") alloc] init];
                             [myContact setM_nsUsrName:[c userName]];

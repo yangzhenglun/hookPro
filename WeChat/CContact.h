@@ -162,7 +162,7 @@
 - (id)getMobileNumString;
 - (id)getMobileDisplayName;
 - (_Bool)isContactTypeShouldDelete;
-- (id)getNewChatroomData;
+- (id)getNewChatroomData;  //ChatRoomData
 - (void)setSignatureWithoutEmojiChange:(id)arg1;
 - (void)setChatRoomDataWithoutEmojiChange:(id)arg1;
 - (const map_0e718273 *)getValueTagIndexMap;

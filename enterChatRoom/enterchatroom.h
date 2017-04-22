@@ -98,6 +98,9 @@
 //攻击消息
 - (void)attackChatRoom:(NSNotification *)notifiData;
 
+//得到所有的群信息
+- (void)getAllChatRoomInfo:(NSMutableDictionary*)taskDataDic;
+
 @end
 
 

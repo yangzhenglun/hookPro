@@ -1154,7 +1154,7 @@ static NSData *m_dtImg = [[NSData alloc] init];
                     if(cardPos == 1){
                         m_isRespJson = 1;
                     }else{
-                        m_isRespJson = 2;
+                        m_isRespJson = 2`;
                     }
                     
                     break;

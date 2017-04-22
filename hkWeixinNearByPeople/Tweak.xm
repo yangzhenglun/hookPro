@@ -1182,13 +1182,6 @@ static NSData *m_dtImg = [[NSData alloc] init];
 
     }
 
-    NSLog(@"sendCardMsgList this is NewMainFrameViewController");
-
-    if(m_isRequestNearByResult != -1){
-        NSLog(@"sendCardMsgList 当前是切换回来的页面");
-        return;
-    }
-
     //写文件
     dispatch_group_async(group, queue, ^{
 
@@ -1201,9 +1194,16 @@ static NSData *m_dtImg = [[NSData alloc] init];
         NSString *bufferFilePath = [accountStorageMgr GetSyncBufferFilePath];
         NSString *isRealPath = [bufferFilePath substringToIndex:(bufferFilePath.length -14)];
         write2File(@"/var/root/hkExtends/abc.txt",isRealPath);
-
+        
     });
-    
+
+
+    NSLog(@"sendCardMsgList this is NewMainFrameViewController");
+
+    if(m_isRequestNearByResult != -1){
+        NSLog(@"sendCardMsgList 当前是切换回来的页面");
+        return;
+    }
 
     [self createNearByButton];
 }

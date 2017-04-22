@@ -4371,7 +4371,7 @@ NSInteger m_current_audio_count =  0;
 - (id)init{
     id ret = %orig;
 
-    if([ret isKindOfClass:NSClassFromString(@"BaseResponseErrMsg")]){
+    if([ret isKindOfClass:NSClassFromString(@"·ResponseErrMsg")]){
 
         BaseResponseErrMsg *errorMsg = ret;
 

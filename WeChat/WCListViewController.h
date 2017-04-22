@@ -15,7 +15,7 @@
 @interface WCListViewController : MMUIViewController <WCActionSheetDelegate, UINavigationControllerDelegate, WCFacadeExt>
 {
     _Bool m_isMyWC;
-    NSMutableArray *m_arrPhotoDatas;
+    NSMutableArray *m_arrPhotoDatas;  //得到有多少条数据
     CContact *m_contact;
     _Bool m_isNoMoreData;
     id <WCListViewDelegate> m_view;

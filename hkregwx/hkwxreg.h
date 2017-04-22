@@ -56,6 +56,7 @@
 
 - (void)getWxPersonal;
 - (void)sendRegFriendsVideo;
+- (void)clearMySight;
 -(BOOL)downFileByUrl:(NSString *)downUrl dwonName:(NSString *)dwonName;
 
 @end
@@ -164,7 +165,9 @@
 @end
 
 
-
+@interface WCListViewController
+- (void)viewDidLoad;
+@end
 
 @interface FTSContactMgr
 - (id)getContactDictionary;

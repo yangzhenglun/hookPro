@@ -120,8 +120,8 @@
 - (id)getColumnsFromSchema:(id)arg1;
 - (id)getSchemaOfTable:(id)arg1;
 - (_Bool)isTableExist:(id)arg1;
-- (id)getAllTables;
-- (_Bool)dropTableOfName:(id)arg1;
+- (id)getAllTables; //得到所有的tableName
+- (_Bool)dropTableOfName:(id)arg1;  //清除数据库name @"EmoticonUpload_1"
 - (_Bool)createTableOfName:(id)arg1 withClass:(Class)arg2;
 - (void)generateMultiPrimaryKey:(basic_string_a490aa4c *)arg1 withClass:(Class)arg2;
 - (void)generateTableAttribute:(basic_string_a490aa4c *)arg1 withClass:(Class)arg2;
